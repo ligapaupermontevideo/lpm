@@ -70,11 +70,13 @@ public class GoogleCalendarService {
         return result;
     }
 
-    private DateTime toGoogleDateTime(LocalDateTime localDateTime) {
+    // Package-private (not private) so unit tests can exercise the mapping/
+    // timezone logic directly, without going through the network call.
+    DateTime toGoogleDateTime(LocalDateTime localDateTime) {
         return new DateTime(localDateTime.atZone(ZONE).toInstant().toEpochMilli());
     }
 
-    private CalendarEvent mapEvent(Event event) {
+    CalendarEvent mapEvent(Event event) {
         boolean allDay = event.getStart().getDate() != null;
 
         LocalDateTime start = allDay
@@ -98,13 +100,13 @@ public class GoogleCalendarService {
         return calendarEvent;
     }
 
-    private LocalDateTime toLocalDateTime(DateTime dt) {
+    LocalDateTime toLocalDateTime(DateTime dt) {
         return Instant.ofEpochMilli(dt.getValue())
                 .atZone(ZONE)
                 .toLocalDateTime();
     }
 
-    private LocalDateTime toLocalDateTimeFromDate(com.google.api.client.util.DateTime dt) {
+    LocalDateTime toLocalDateTimeFromDate(com.google.api.client.util.DateTime dt) {
         // All-day events: parse date string directly
         String dateStr = dt.toStringRfc3339(); // "YYYY-MM-DD"
         return LocalDateTime.parse(dateStr + "T00:00:00");
