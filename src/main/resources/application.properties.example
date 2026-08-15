@@ -1,0 +1,10 @@
+spring.application.name=liga-calendar
+
+# Google Calendar configuration
+# Replace with your public Google Calendar ID (e.g. abc123@group.calendar.google.com or your@gmail.com)
+google.calendar.id=your-calendar-id@group.calendar.google.com
+
+# Optional: Google API Key for public calendars (no OAuth needed for public calendars)
+google.api.key=YOUR_API_KEY_HERE
+
+server.port=8080

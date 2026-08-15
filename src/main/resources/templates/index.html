@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Eventos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1>Liga Pauper Montevideo</h1>
+        <p class="subtitle">Calendario de Eventos</p>
+    </div>
+</header>
+
+<main>
+    <section class="calendar-section">
+
+        <div class="calendar-month">
+            <div class="month-nav">
+                <a class="nav-arrow" th:href="@{/(year=${prevYear}, month=${prevMonth})}" aria-label="Mes anterior">&#10094;</a>
+                <h2 class="month-label" th:text="${month.label}">Mes Anio</h2>
+                <a class="nav-arrow" th:href="@{/(year=${nextYear}, month=${nextMonth})}" aria-label="Mes siguiente">&#10095;</a>
+            </div>
+
+            <div class="weekday-header">
+                <span>Lun</span><span>Mar</span><span>Mi&eacute;</span><span>Jue</span><span>Vie</span><span>S&aacute;b</span><span>Dom</span>
+            </div>
+
+            <div class="calendar-grid" th:each="week : ${month.weeks}">
+                <div th:each="day : ${week}"
+                     class="calendar-day"
+                     th:classappend="${(day.prevMonth ? 'prev-outside' : (day.nextMonth ? 'next-outside' : '')) + (day.today ? ' today' : '') + (day.hasEvents ? ' has-events' : '')}">
+
+                    <div class="day-content">
+                        <span class="day-number" th:text="${day.dayNumber}">1</span>
+                        <span th:if="${day.hasEvents}" class="event-dot"></span>
+                    </div>
+
+                    <div th:if="${day.hasEvents}" class="day-tooltip">
+                        <div th:each="event : ${day.events}" class="tooltip-event">
+                            <p class="tooltip-title" th:text="${event.title}">Evento</p>
+                            <p class="tooltip-meta" th:if="${event.allDay}">Todo el d&iacute;a</p>
+                            <p class="tooltip-meta" th:unless="${event.allDay}"
+                               th:text="${#temporals.format(event.start, 'HH:mm') + ' - ' + #temporals.format(event.end, 'HH:mm')}">
+                                Hora
+                            </p>
+                            <p class="tooltip-meta" th:if="${event.location}" th:text="${event.location}">Lugar</p>
+                            <p class="tooltip-desc" th:if="${event.description}" th:text="${event.description}">Descripcion</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<footer>
+    <p>Liga Pauper Montevideo &copy; 2026</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+target/
+.idea/
+*.iml
+.claude/settings.local.json
+
+# Contains a real Google API key — keep local, never commit.
+src/main/resources/application.properties
