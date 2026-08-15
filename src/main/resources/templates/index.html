@@ -36,17 +36,39 @@
 
                     <div class="day-content">
                         <span class="day-number" th:text="${day.dayNumber}">1</span>
-                        <span th:if="${day.hasEvents}" class="event-dot"></span>
+                        <div th:if="${day.hasEvents}" class="event-dots">
+                            <span th:each="event, iter : ${day.events}"
+                                  th:if="${iter.index lt 5}"
+                                  class="event-dot"
+                                  th:style="|background: ${event.colorHex};|"></span>
+                            <span th:if="${#lists.size(day.events) gt 5}"
+                                  class="event-more"
+                                  th:text="${'+' + (#lists.size(day.events) - 5)}">+2</span>
+                        </div>
                     </div>
 
                     <div th:if="${day.hasEvents}" class="day-tooltip">
-                        <div th:each="event : ${day.events}" class="tooltip-event">
-                            <p class="tooltip-title" th:text="${event.title}">Evento</p>
-                            <p class="tooltip-meta" th:if="${event.allDay}">Todo el d&iacute;a</p>
-                            <p class="tooltip-meta" th:unless="${event.allDay}"
+                        <div th:each="event : ${day.events}" class="tooltip-event"
+                             th:style="|border-left-color: ${event.colorHex};|">
+                            <p class="tooltip-title">
+                                <span th:text="${event.title}">Evento</span>
+                                <span th:if="${event.multiDay}" class="tooltip-badge">Varios d&iacute;as</span>
+                            </p>
+
+                            <p class="tooltip-meta" th:if="${event.allDay and !event.multiDay}">Todo el d&iacute;a</p>
+                            <p class="tooltip-meta" th:if="${event.allDay and event.multiDay}"
+                               th:text="|${#temporals.format(event.start, 'dd MMM', new java.util.Locale('es'))} - ${#temporals.format(event.displayEndDate, 'dd MMM', new java.util.Locale('es'))}|">
+                                Rango de fechas
+                            </p>
+                            <p class="tooltip-meta" th:if="${!event.allDay and !event.multiDay}"
                                th:text="${#temporals.format(event.start, 'HH:mm') + ' - ' + #temporals.format(event.end, 'HH:mm')}">
                                 Hora
                             </p>
+                            <p class="tooltip-meta" th:if="${!event.allDay and event.multiDay}"
+                               th:text="|${#temporals.format(event.start, 'dd MMM HH:mm', new java.util.Locale('es'))} - ${#temporals.format(event.end, 'dd MMM HH:mm', new java.util.Locale('es'))}|">
+                                Rango con hora
+                            </p>
+
                             <p class="tooltip-meta" th:if="${event.location}" th:text="${event.location}">Lugar</p>
                             <p class="tooltip-desc" th:if="${event.description}" th:text="${event.description}">Descripcion</p>
                         </div>

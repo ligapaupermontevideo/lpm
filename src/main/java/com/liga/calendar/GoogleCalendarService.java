@@ -85,7 +85,7 @@ public class GoogleCalendarService {
                 ? toLocalDateTimeFromDate(event.getEnd().getDate())
                 : toLocalDateTime(event.getEnd().getDateTime());
 
-        return new CalendarEvent(
+        CalendarEvent calendarEvent = new CalendarEvent(
                 event.getId(),
                 event.getSummary(),
                 event.getDescription(),
@@ -94,6 +94,8 @@ public class GoogleCalendarService {
                 end,
                 allDay
         );
+        calendarEvent.setColorId(event.getColorId());
+        return calendarEvent;
     }
 
     private LocalDateTime toLocalDateTime(DateTime dt) {

@@ -69,10 +69,14 @@ public final class CalendarGridBuilder {
     private static Map<LocalDate, List<CalendarEvent>> groupByDay(List<CalendarEvent> events) {
         Map<LocalDate, List<CalendarEvent>> eventsByDay = new LinkedHashMap<>();
         for (CalendarEvent event : events) {
-            if (event.getStart() == null) continue;
-            eventsByDay
-                    .computeIfAbsent(event.getStart().toLocalDate(), d -> new ArrayList<>())
-                    .add(event);
+            LocalDate first = event.getStartDate();
+            if (first == null) continue;
+            LocalDate last = event.getDisplayEndDate();
+            if (last == null || last.isBefore(first)) last = first;
+
+            for (LocalDate d = first; !d.isAfter(last); d = d.plusDays(1)) {
+                eventsByDay.computeIfAbsent(d, k -> new ArrayList<>()).add(event);
+            }
         }
         return eventsByDay;
     }
