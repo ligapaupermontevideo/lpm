@@ -1,4 +1,4 @@
-spring.application.name=liga-calendar
+spring.application.name=lpmapplication
 
 # Google Calendar configuration
 # Replace with your public Google Calendar ID (e.g. abc123@group.calendar.google.com or your@gmail.com)

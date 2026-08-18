@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Shared header and footer for every page. Include with th:replace, e.g.:
+    <header th:replace="fragments/layout :: header('Calendario de Eventos')"></header>
+    <footer th:replace="fragments/layout :: footer"></footer>
+-->
+<header th:fragment="header(subtitle)">
+    <div class="header-content">
+        <a class="site-title" th:href="@{/}">
+            <h1>Liga Pauper Montevideo</h1>
+        </a>
+        <p class="subtitle" th:text="${subtitle}">Subtitulo</p>
+    </div>
+</header>
+
+<footer th:fragment="footer">
+    <p>Liga Pauper Montevideo &copy; 2026</p>
+</footer>
+
+</body>
+</html>

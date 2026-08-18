@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CalendarApplication {
+public class LpmApplication {
     public static void main(String[] args) {
-        SpringApplication.run(CalendarApplication.class, args);
+        SpringApplication.run(LpmApplication.class, args);
     }
 }

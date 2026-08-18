@@ -18,7 +18,7 @@ public class CalendarController {
         this.calendarService = calendarService;
     }
 
-    @GetMapping("/")
+    @GetMapping("/calendario")
     public String index(@RequestParam(value = "year", required = false) Integer year,
                          @RequestParam(value = "month", required = false) Integer month,
                          Model model) {

@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liga Pauper Montevideo - Eventos</title>
+    <title>Liga Pauper Montevideo - Calendario</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<header>
-    <div class="header-content">
-        <h1>Liga Pauper Montevideo</h1>
-        <p class="subtitle">Calendario de Eventos</p>
-    </div>
-</header>
+<header th:replace="fragments/layout :: header('Calendario de Eventos')"></header>
 
 <main>
     <section class="calendar-section">
 
         <div class="calendar-month">
             <div class="month-nav">
-                <a class="nav-arrow" th:href="@{/(year=${prevYear}, month=${prevMonth})}" aria-label="Mes anterior">&#10094;</a>
+                <a class="nav-arrow" th:href="@{/calendario(year=${prevYear}, month=${prevMonth})}" aria-label="Mes anterior">&#10094;</a>
                 <h2 class="month-label" th:text="${month.label}">Mes Anio</h2>
-                <a class="nav-arrow" th:href="@{/(year=${nextYear}, month=${nextMonth})}" aria-label="Mes siguiente">&#10095;</a>
+                <a class="nav-arrow" th:href="@{/calendario(year=${nextYear}, month=${nextMonth})}" aria-label="Mes siguiente">&#10095;</a>
             </div>
 
             <div class="weekday-header">
@@ -80,9 +75,7 @@
     </section>
 </main>
 
-<footer>
-    <p>Liga Pauper Montevideo &copy; 2026</p>
-</footer>
+<footer th:replace="fragments/layout :: footer"></footer>
 
 </body>
 </html>
