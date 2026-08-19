@@ -12,6 +12,10 @@ import java.util.List;
 public record Section(String name, String description, String url, String icon) {
 
     public static final List<Section> ALL = List.of(
-            new Section("Calendario", "Eventos y torneos del mes", "/calendario", "📅")
+            new Section("Calendario", "Eventos y torneos del mes", "/calendario", "📅"),
+            new Section("Alquiler de Decks", "Mazos disponibles para alquilar en los eventos", "/alquiler-decks", "🃏"),
+            new Section("Accesorios", "Fundas, playmats y accesorios para tus partidas", "/accesorios", "🎒"),
+            new Section("Tokens", "Tokens y fichas para tus mazos", "/tokens", "🪙"),
+            new Section("Merchandising", "Remeras, stickers y otros productos de la liga", "/merchandising", "👕")
     );
 }
