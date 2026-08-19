@@ -1,3 +1,27 @@
+/* Uruguay-inspired light palette: celeste (flag blue) as the primary
+   accent, the Sol de Mayo gold reserved for special highlights (today,
+   badges, "coming soon"), and white/near-white surfaces everywhere else.
+   Centralizing the palette here means retheming later is a one-place edit. */
+:root {
+    --color-bg: #f6f9fc;
+    --color-surface: #ffffff;
+    --color-border: #d3e3f3;
+
+    --color-blue: #2f6fb0;
+    --color-blue-strong: #1f5c99;
+    --color-blue-tint: #eaf3fb;
+    --color-blue-tint-strong: #dbeafc;
+
+    --color-gold: #f2b705;
+    --color-gold-text: #92660a;
+
+    --color-text: #1a2b3c;
+    --color-text-secondary: #5b7083;
+    --color-text-tertiary: #93a5b8;
+
+    --shadow-card: 0 1px 2px rgba(31, 78, 122, 0.05), 0 2px 8px rgba(31, 78, 122, 0.06);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,8 +30,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #1a1a2e;
-    color: #e0e0e0;
+    background-color: var(--color-bg);
+    color: var(--color-text);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -15,10 +39,10 @@ body {
 
 /* Header */
 header {
-    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    background: var(--color-blue-tint);
     padding: 2rem;
     text-align: center;
-    border-bottom: 3px solid #e94560;
+    border-bottom: 3px solid var(--color-blue);
 }
 
 .site-title {
@@ -28,12 +52,12 @@ header {
 
 .header-content h1 {
     font-size: 2.2rem;
-    color: #ffffff;
+    color: var(--color-blue-strong);
     letter-spacing: 1px;
 }
 
 .subtitle {
-    color: #a0aec0;
+    color: var(--color-text-secondary);
     font-size: 1rem;
     margin-top: 0.4rem;
     text-transform: uppercase;
@@ -68,9 +92,10 @@ main {
 }
 
 .section-card {
-    background: #16213e;
-    border: 1px solid #0f3460;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 10px;
+    box-shadow: var(--shadow-card);
     padding: 1.8rem 1.4rem;
     display: flex;
     flex-direction: column;
@@ -79,11 +104,12 @@ main {
     gap: 0.5rem;
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .section-card:hover {
-    border-color: #e94560;
+    border-color: var(--color-blue);
+    box-shadow: 0 4px 14px rgba(47, 111, 176, 0.18);
     transform: translateY(-2px);
 }
 
@@ -100,18 +126,18 @@ main {
 
 .section-card .icon {
     font-size: 2.2rem;
-    color: #e94560;
+    color: var(--color-blue);
 }
 
 .section-name {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--color-text);
 }
 
 .section-desc {
     font-size: 0.8rem;
-    color: #a0aec0;
+    color: var(--color-text-secondary);
 }
 
 /* Placeholder page for sections without a real page yet */
@@ -121,24 +147,25 @@ main {
     align-items: center;
     text-align: center;
     gap: 0.8rem;
-    background: #16213e;
-    border: 1px solid #0f3460;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 10px;
+    box-shadow: var(--shadow-card);
     padding: 3rem 1.5rem;
 }
 
 .placeholder-section .icon {
     font-size: 3rem;
-    color: #e94560;
+    color: var(--color-blue);
 }
 
 .placeholder-desc {
-    color: #a0aec0;
+    color: var(--color-text-secondary);
     font-size: 1rem;
 }
 
 .placeholder-soon {
-    color: #e94560;
+    color: var(--color-gold-text);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -147,28 +174,29 @@ main {
 
 .back-home {
     margin-top: 1rem;
-    color: #a0aec0;
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
     text-decoration: none;
 }
 
 .back-home:hover {
-    color: #e94560;
+    color: var(--color-blue);
 }
 
 /* No events */
 .no-events {
     text-align: center;
     padding: 3rem;
-    color: #718096;
+    color: var(--color-text-tertiary);
     font-size: 1.1rem;
 }
 
 /* Month block */
 .calendar-month {
-    background: #16213e;
-    border: 1px solid #0f3460;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 10px;
+    box-shadow: var(--shadow-card);
     padding: 1.4rem;
 }
 
@@ -182,7 +210,7 @@ main {
 
 .month-label {
     text-align: center;
-    color: #ffffff;
+    color: var(--color-text);
     font-size: 1.3rem;
     font-weight: 600;
     letter-spacing: 1px;
@@ -196,8 +224,8 @@ main {
     width: 2.1rem;
     height: 2.1rem;
     border-radius: 50%;
-    border: 1px solid #0f3460;
-    color: #a0aec0;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
     text-decoration: none;
     font-size: 1rem;
     flex-shrink: 0;
@@ -205,9 +233,9 @@ main {
 }
 
 .nav-arrow:hover {
-    background: #e94560;
-    border-color: #e94560;
-    color: #fff;
+    background: var(--color-blue);
+    border-color: var(--color-blue);
+    color: var(--color-surface);
 }
 
 /* Weekday header */
@@ -221,7 +249,7 @@ main {
 .weekday-header span {
     text-align: center;
     font-size: 0.75rem;
-    color: #718096;
+    color: var(--color-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 0.3rem 0;
@@ -240,7 +268,7 @@ main {
     position: relative;
     z-index: 1;
     aspect-ratio: 1 / 1;
-    background: #0f3460;
+    background: var(--color-blue-tint);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
@@ -255,11 +283,11 @@ main {
 }
 
 .calendar-day.today {
-    box-shadow: inset 0 0 0 2px #e94560;
+    box-shadow: inset 0 0 0 2px var(--color-gold);
 }
 
 .calendar-day.has-events {
-    background: #17325c;
+    background: var(--color-blue-tint-strong);
 }
 
 /* Everything faded for days outside the current month — but only the
@@ -274,17 +302,17 @@ main {
 }
 
 .calendar-day.prev-outside .day-content {
-    opacity: 0.25;
+    opacity: 0.35;
 }
 
 .calendar-day.next-outside .day-content {
-    opacity: 0.45;
+    opacity: 0.55;
 }
 
 .day-number {
     font-size: 1.68rem;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--color-text);
 }
 
 .calendar-day.prev-outside .day-number,
@@ -294,7 +322,7 @@ main {
 }
 
 .calendar-day.today .day-number {
-    color: #e94560;
+    color: var(--color-gold-text);
 }
 
 .event-dots {
@@ -310,14 +338,14 @@ main {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #e94560;
+    background: var(--color-blue);
     flex-shrink: 0;
 }
 
 .event-more {
     font-size: 0.55rem;
     font-weight: 700;
-    color: #a0aec0;
+    color: var(--color-text-tertiary);
     line-height: 1;
 }
 
@@ -331,11 +359,11 @@ main {
     gap: 0.5rem;
     width: max-content;
     max-width: 240px;
-    background: #0f3460;
-    border: 1px solid #e94560;
+    background: var(--color-surface);
+    border: 1px solid var(--color-blue);
     border-radius: 8px;
     padding: 0.6rem;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 24px rgba(31, 78, 122, 0.18);
     text-align: left;
     opacity: 0;
     visibility: hidden;
@@ -353,8 +381,8 @@ main {
 /* Each event is its own card, accented with the same color it has in
    Google Calendar, so multiple events on one day are clearly separated. */
 .tooltip-event {
-    background: #16213e;
-    border-left: 3px solid #e94560;
+    background: var(--color-blue-tint);
+    border-left: 3px solid var(--color-blue);
     border-radius: 5px;
     padding: 0.5rem 0.6rem;
 }
@@ -364,15 +392,15 @@ main {
     align-items: center;
     flex-wrap: wrap;
     gap: 0.4rem;
-    color: #ffffff;
+    color: var(--color-text);
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 0.2rem;
 }
 
 .tooltip-badge {
-    background: #e94560;
-    color: #fff;
+    background: var(--color-gold);
+    color: var(--color-text);
     font-size: 0.6rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -383,13 +411,13 @@ main {
 }
 
 .tooltip-meta {
-    color: #a0aec0;
+    color: var(--color-text-secondary);
     font-size: 0.75rem;
     text-transform: capitalize;
 }
 
 .tooltip-desc {
-    color: #718096;
+    color: var(--color-text-tertiary);
     font-size: 0.75rem;
     line-height: 1.4;
     margin-top: 0.3rem;
@@ -399,8 +427,9 @@ main {
 footer {
     text-align: center;
     padding: 1.2rem;
-    background: #0f3460;
-    color: #718096;
+    background: var(--color-blue-tint);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
 }
 
