@@ -16,7 +16,7 @@
             <a th:each="section : ${sections}"
                class="section-card"
                th:href="@{${section.url}}">
-                <span class="section-icon" th:text="${section.icon}">&#128197;</span>
+                <span th:replace="fragments/icons :: icon(${section.icon})"></span>
                 <span class="section-name" th:text="${section.name}">Nombre</span>
                 <span class="section-desc" th:text="${section.description}">Descripcion</span>
             </a>

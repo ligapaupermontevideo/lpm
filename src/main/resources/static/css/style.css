@@ -87,9 +87,20 @@ main {
     transform: translateY(-2px);
 }
 
-.section-icon {
+/* Inline SVG section icons — sized via font-size + em so the same markup
+   works at different sizes on the home page and the placeholder page. */
+.icon {
+    display: inline-flex;
+}
+
+.icon svg {
+    width: 1em;
+    height: 1em;
+}
+
+.section-card .icon {
     font-size: 2.2rem;
-    line-height: 1;
+    color: #e94560;
 }
 
 .section-name {
@@ -116,9 +127,9 @@ main {
     padding: 3rem 1.5rem;
 }
 
-.placeholder-icon {
+.placeholder-section .icon {
     font-size: 3rem;
-    line-height: 1;
+    color: #e94560;
 }
 
 .placeholder-desc {

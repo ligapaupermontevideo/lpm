@@ -12,7 +12,7 @@
 
 <main>
     <section class="placeholder-section">
-        <span class="placeholder-icon" th:text="${section.icon}">&#128197;</span>
+        <span th:replace="fragments/icons :: icon(${section.icon})"></span>
         <p class="placeholder-desc" th:text="${section.description}">Descripcion</p>
         <p class="placeholder-soon">Proximamente</p>
         <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
