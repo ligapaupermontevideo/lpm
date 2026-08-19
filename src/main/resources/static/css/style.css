@@ -122,6 +122,7 @@ main {
 .icon svg {
     width: 1em;
     height: 1em;
+    shape-rendering: crispEdges;
 }
 
 .section-card .icon {
