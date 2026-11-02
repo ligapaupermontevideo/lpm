@@ -19,7 +19,7 @@ public record Section(String name, String description, String url, String icon) 
 
     public static final List<Section> ALL = List.of(
             new Section("Calendario", "Eventos y torneos del mes", "/calendario", "calendar"),
-            new Section("Alquiler de Decks", "Mazos disponibles para alquilar en los eventos", "/alquiler-decks", "cards"),
+            new Section("Reserva de decks", "Mazos disponibles para las fechas oficiales de la liga", "/prestamo-mazos", "cards"),
             new Section("Accesorios", "Fundas, playmats y accesorios para tus partidas", "/accesorios", "bag"),
             new Section("Tokens", "Tokens y fichas para tus mazos", "/tokens", "coin"),
             new Section("Merchandising", "Remeras, stickers y otros productos de la liga", "/merchandising", "shirt")

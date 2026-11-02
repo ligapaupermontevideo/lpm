@@ -7,12 +7,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,7 +29,7 @@ class CalendarControllerTest {
     @Test
     void indexWithoutParamsUsesCurrentMonth() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         String view = controller.index(null, null, model);
@@ -44,7 +47,7 @@ class CalendarControllerTest {
     @Test
     void indexWithExplicitYearAndMonthUsesThatMonth() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -59,7 +62,7 @@ class CalendarControllerTest {
     @Test
     void indexRollsOverToNextYearInDecember() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         controller.index(2026, 12, model);
@@ -73,7 +76,7 @@ class CalendarControllerTest {
     @Test
     void indexRollsOverToPreviousYearInJanuary() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         controller.index(2026, 1, model);
@@ -87,7 +90,7 @@ class CalendarControllerTest {
     @Test
     void indexFetchesEventsForTheDisplayedGridRange() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -107,7 +110,7 @@ class CalendarControllerTest {
                 java.time.LocalDateTime.of(2026, 10, 15, 19, 30),
                 java.time.LocalDateTime.of(2026, 10, 15, 23, 30), false);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
-        CalendarController controller = new CalendarController(calendarService);
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -117,5 +120,16 @@ class CalendarControllerTest {
                 .flatMap(List::stream)
                 .anyMatch(day -> day.getEvents().contains(event));
         assertThat(found).isTrue();
+    }
+
+    @Test
+    void indexIsNotFoundWhenTheSectionIsDisabled() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("calendario", false));
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties));
+        Model model = new ConcurrentModel();
+
+        assertThatThrownBy(() -> controller.index(null, null, model))
+                .isInstanceOf(ResponseStatusException.class);
     }
 }

@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="|Liga Pauper Montevideo - ${section.name}|">Liga Pauper Montevideo</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<header th:replace="fragments/layout :: header(${section.name})"></header>
+<header th:replace="~{fragments/layout :: header(${section.name})}"></header>
 
 <main>
     <section class="placeholder-section">
-        <span th:replace="fragments/icons :: icon(${section.icon})"></span>
+        <span th:replace="~{fragments/icons :: icon(${section.icon})}"></span>
         <p class="placeholder-desc" th:text="${section.description}">Descripcion</p>
         <p class="placeholder-soon">Proximamente</p>
         <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
     </section>
 </main>
 
-<footer th:replace="fragments/layout :: footer"></footer>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 </body>
 </html>

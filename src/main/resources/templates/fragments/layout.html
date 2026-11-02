@@ -4,10 +4,13 @@
 
 <!--
   Shared header and footer for every page. Include with th:replace, e.g.:
-    <header th:replace="fragments/layout :: header('Calendario de Eventos')"></header>
-    <footer th:replace="fragments/layout :: footer"></footer>
+    <header th:replace="~{fragments/layout :: header('Calendario de Eventos')}"></header>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 -->
 <header th:fragment="header(subtitle)">
+    <a class="logo-link" th:href="@{/}" aria-label="Liga Pauper Montevideo">
+        <img class="logo" th:src="@{/img/logo.png}" alt="Liga Pauper Montevideo"/>
+    </a>
     <div class="header-content">
         <a class="site-title" th:href="@{/}">
             <h1>Liga Pauper Montevideo</h1>
@@ -15,7 +18,7 @@
         <p class="subtitle" th:text="${subtitle}">Subtitulo</p>
     </div>
     <a class="cart-link" th:href="@{/carrito}" aria-label="Carrito de compras">
-        <span th:replace="fragments/icons :: icon('cart')"></span>
+        <span th:replace="~{fragments/icons :: icon('cart')}"></span>
         <span th:if="${cartItemCount > 0}" class="cart-badge" th:text="${cartItemCount}">0</span>
     </a>
 </header>

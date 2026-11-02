@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="|Liga Pauper Montevideo - ${section.name}|">Liga Pauper Montevideo</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header(${section.name})}"></header>
+
+<main>
+    <section class="reservas-section">
+        <p th:if="${errorMessage}" class="reserva-toast reserva-toast-error" th:text="${errorMessage}">Error</p>
+
+        <div th:if="${confirmedDeck}" class="reserva-toast reserva-toast-ok">
+            <p>
+                Reserva registrada: <strong th:text="${confirmedDeck}">Deck</strong>
+                para el <strong th:text="${confirmedDate}">fecha</strong>.
+            </p>
+            <a class="btn-checkout" th:href="${whatsappUrl}" target="_blank" rel="noopener">
+                Confirmar por WhatsApp
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(availableDates)}" class="no-events">
+            No hay fechas oficiales cargadas por ahora. Volve a revisar mas adelante.
+        </div>
+        <div th:if="${#lists.isEmpty(decks)}" class="no-events">
+            No se pudo cargar la lista de decks en este momento. Volve a intentar mas tarde.
+        </div>
+
+        <form th:if="${!#lists.isEmpty(availableDates) and !#lists.isEmpty(decks)}"
+              method="post" th:action="@{/prestamo-mazos/reservar}" class="reserva-form">
+
+            <label for="nombre">Nombre completo</label>
+            <input type="text" id="nombre" name="nombre" required/>
+
+            <label for="cedula">Cedula de identidad</label>
+            <input type="text" id="cedula" name="cedula" placeholder="1.234.567-8" required/>
+
+            <label for="deckId">Deck</label>
+            <select id="deckId" name="deckId" required>
+                <option th:each="deck : ${decks}" th:value="${deck.id}" th:text="${deck.name}">Deck</option>
+            </select>
+
+            <label for="fecha">Fecha</label>
+            <select id="fecha" name="fecha" required>
+                <option th:each="date : ${availableDates}" th:value="${date.value}" th:text="${date.label}">Fecha</option>
+            </select>
+            <p class="form-hint">Las reservas para el mismo dia cierran a las 17:00.</p>
+
+            <button type="submit" class="btn-add">Reservar</button>
+        </form>
+
+        <div th:unless="${#lists.isEmpty(decks)}" class="deck-list">
+            <h3>Decks disponibles</h3>
+            <ul>
+                <li th:each="deck : ${decks}" th:attr="data-deck-id=${deck.id}">
+                    <a th:href="${deck.url}" target="_blank" rel="noopener" th:text="${deck.name}">Deck</a>
+                    <span class="deck-reserved-tag">Reservado</span>
+                </li>
+            </ul>
+        </div>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script th:if="${!#lists.isEmpty(availableDates) and !#lists.isEmpty(decks)}" th:inline="javascript">
+    /*<![CDATA[*/
+    (function () {
+        var reservedByDate = /*[[${reservedByDate}]]*/ {};
+        var dateSelect = document.getElementById('fecha');
+        var deckSelect = document.getElementById('deckId');
+        var deckListItems = document.querySelectorAll('.deck-list li[data-deck-id]');
+
+        Array.prototype.forEach.call(deckSelect.options, function (opt) {
+            opt.dataset.label = opt.textContent;
+        });
+
+        function update() {
+            var reservedIds = reservedByDate[dateSelect.value] || [];
+
+            Array.prototype.forEach.call(deckSelect.options, function (opt) {
+                var taken = reservedIds.indexOf(opt.value) !== -1;
+                opt.disabled = taken;
+                opt.textContent = taken ? opt.dataset.label + ' (reservado)' : opt.dataset.label;
+            });
+
+            var selected = deckSelect.options[deckSelect.selectedIndex];
+            if (selected && selected.disabled) {
+                for (var i = 0; i < deckSelect.options.length; i++) {
+                    if (!deckSelect.options[i].disabled) {
+                        deckSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            Array.prototype.forEach.call(deckListItems, function (li) {
+                var taken = reservedIds.indexOf(li.getAttribute('data-deck-id')) !== -1;
+                li.classList.toggle('deck-reserved', taken);
+            });
+        }
+
+        dateSelect.addEventListener('change', update);
+        update();
+    })();
+    /*]]>*/
+</script>
+
+</body>
+</html>

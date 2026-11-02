@@ -13,15 +13,19 @@ import java.util.List;
 public class CalendarController {
 
     private final GoogleCalendarService calendarService;
+    private final SectionAccess sectionAccess;
 
-    public CalendarController(GoogleCalendarService calendarService) {
+    public CalendarController(GoogleCalendarService calendarService, SectionAccess sectionAccess) {
         this.calendarService = calendarService;
+        this.sectionAccess = sectionAccess;
     }
 
     @GetMapping("/calendario")
     public String index(@RequestParam(value = "year", required = false) Integer year,
                          @RequestParam(value = "month", required = false) Integer month,
                          Model model) {
+        sectionAccess.requireEnabled("/calendario");
+
         YearMonth current = (year != null && month != null)
                 ? YearMonth.of(year, month)
                 : YearMonth.now();

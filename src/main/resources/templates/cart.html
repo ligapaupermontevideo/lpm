@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liga Pauper Montevideo - Carrito</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<header th:replace="fragments/layout :: header('Carrito de Compras')"></header>
+<header th:replace="~{fragments/layout :: header('Carrito de Compras')}"></header>
 
 <main>
     <section class="cart-section">
@@ -18,7 +20,7 @@
 
         <div th:unless="${#lists.isEmpty(lines)}" class="cart-lines">
             <div class="cart-line" th:each="line : ${lines}">
-                <span th:replace="fragments/icons :: icon(${line.product.icon})"></span>
+                <span th:replace="~{fragments/icons :: icon(${line.product.icon})}"></span>
 
                 <div class="cart-line-info">
                     <p class="cart-line-name" th:text="${line.product.name}">Producto</p>
@@ -53,7 +55,7 @@
     </section>
 </main>
 
-<footer th:replace="fragments/layout :: footer"></footer>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 </body>
 </html>

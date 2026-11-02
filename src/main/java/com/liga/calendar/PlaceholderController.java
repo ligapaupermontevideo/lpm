@@ -1,11 +1,9 @@
 package com.liga.calendar;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Serves a "coming soon" page for any section registered in
@@ -16,12 +14,15 @@ import org.springframework.web.server.ResponseStatusException;
 @Controller
 public class PlaceholderController {
 
+    private final SectionAccess sectionAccess;
+
+    public PlaceholderController(SectionAccess sectionAccess) {
+        this.sectionAccess = sectionAccess;
+    }
+
     @GetMapping("/{slug}")
     public String placeholder(@PathVariable String slug, Model model) {
-        Section section = Section.ALL.stream()
-                .filter(s -> s.url().equals("/" + slug))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Section section = sectionAccess.requireEnabled("/" + slug);
 
         model.addAttribute("section", section);
         return "placeholder";

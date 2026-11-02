@@ -1,25 +1,56 @@
-/* Uruguay-inspired light palette: celeste (flag blue) as the primary
-   accent, the Sol de Mayo gold reserved for special highlights (today,
-   badges, "coming soon"), and white/near-white surfaces everywhere else.
+/* Brand palette, matching the "fondo claro" logo variants in the league's
+   identity kit: burnt orange as the primary accent, navy doubling as both
+   body text and the dark secondary accent (badges, the "today" ring, the
+   checkout button) — the logo itself only has those two colors plus white,
+   so the whole site is built from them instead of a separate highlight hue.
    Centralizing the palette here means retheming later is a one-place edit. */
 :root {
-    --color-bg: #f6f9fc;
+    --color-bg: #fdf8f6;
     --color-surface: #ffffff;
-    --color-border: #d3e3f3;
+    --color-border: #f7ddd0;
 
-    --color-blue: #2f6fb0;
-    --color-blue-strong: #1f5c99;
-    --color-blue-tint: #eaf3fb;
-    --color-blue-tint-strong: #dbeafc;
+    --color-accent: #d85713;
+    --color-accent-strong: #ad460f;
+    --color-accent-tint: #fbeee7;
+    --color-accent-tint-strong: #f7ddd0;
 
-    --color-gold: #f2b705;
-    --color-gold-text: #92660a;
+    --color-red: #c0392b;
 
-    --color-text: #1a2b3c;
-    --color-text-secondary: #5b7083;
-    --color-text-tertiary: #93a5b8;
+    --color-text: #18223d;
+    --color-text-secondary: #62687b;
+    --color-text-tertiary: #9ea2ae;
 
-    --shadow-card: 0 1px 2px rgba(31, 78, 122, 0.05), 0 2px 8px rgba(31, 78, 122, 0.06);
+    --shadow-card: 0 1px 2px rgba(24, 34, 61, 0.05), 0 2px 8px rgba(24, 34, 61, 0.06);
+
+    /* Beleren is the league's brand display face (same one Magic: The
+       Gathering itself uses for card titles) — only shipped in bold, so
+       it's reserved for headings and short labels, not body copy, where a
+       bold display face hurts readability at small sizes. */
+    --font-display: 'Beleren', Georgia, 'Times New Roman', serif;
+    --font-display-caps: 'Beleren Small Caps', Georgia, 'Times New Roman', serif;
+}
+
+/* font-display: optional (not swap) — with swap, every navigation briefly
+   paints the fallback serif and then snaps to Beleren once it resolves,
+   and since Beleren's metrics differ from the fallback's that snap visibly
+   reflows the centered header title. optional never swaps mid-render: it
+   uses Beleren only if it's already available fast enough (which it
+   reliably is once cached — see the <link rel="preload"> on each page), and
+   otherwise just keeps the fallback for that view instead of jumping. */
+@font-face {
+    font-family: 'Beleren';
+    src: url('/fonts/Beleren2016-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: optional;
+}
+
+@font-face {
+    font-family: 'Beleren Small Caps';
+    src: url('/fonts/Beleren2016SmallCaps-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: optional;
 }
 
 * {
@@ -37,21 +68,43 @@ body {
     flex-direction: column;
 }
 
-/* Header */
+/* Header — a fixed height (not padding-derived) so it stays the same size
+   on every page regardless of how long that page's subtitle is; the logo
+   and cart icon are vertically centered within it via top: 50% rather than
+   a fixed offset, so they stay centered even if the height is tuned later. */
 header {
     position: relative;
-    background: var(--color-blue-tint);
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 7rem;
+    background: var(--color-accent-tint);
+    padding: 0 4.5rem;
     text-align: center;
-    border-bottom: 3px solid var(--color-blue);
+    border-bottom: 3px solid var(--color-accent);
+}
+
+.logo-link {
+    position: absolute;
+    top: 50%;
+    left: 1.2rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+}
+
+.logo {
+    height: 3rem;
+    width: auto;
 }
 
 .cart-link {
     position: absolute;
-    top: 1.2rem;
+    top: 50%;
     right: 1.2rem;
+    transform: translateY(-50%);
     display: inline-flex;
-    color: var(--color-blue-strong);
+    color: var(--color-accent-strong);
     text-decoration: none;
 }
 
@@ -63,8 +116,8 @@ header {
     position: absolute;
     top: -0.3rem;
     right: -0.5rem;
-    background: var(--color-gold);
-    color: var(--color-text);
+    background: var(--color-text);
+    color: var(--color-surface);
     font-size: 0.65rem;
     font-weight: 700;
     min-width: 1.1rem;
@@ -82,14 +135,21 @@ header {
 }
 
 .header-content h1 {
+    font-family: var(--font-display);
     font-size: 2.2rem;
-    color: var(--color-blue-strong);
+    color: var(--color-accent-strong);
     letter-spacing: 1px;
 }
 
 .subtitle {
+    font-family: var(--font-display-caps);
     color: var(--color-text-secondary);
     font-size: 1rem;
+    /* Reserves the line's height even when empty (the home page passes no
+       subtitle) — otherwise the collapsed empty <p> shrinks the header's
+       centered content block, and the title visibly jumps between pages
+       that do and don't have a subtitle. */
+    min-height: 1.2em;
     margin-top: 0.4rem;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -139,8 +199,8 @@ main {
 }
 
 .section-card:hover {
-    border-color: var(--color-blue);
-    box-shadow: 0 4px 14px rgba(47, 111, 176, 0.18);
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 14px rgba(216, 87, 19, 0.18);
     transform: translateY(-2px);
 }
 
@@ -158,10 +218,11 @@ main {
 
 .section-card .icon {
     font-size: 2.2rem;
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 .section-name {
+    font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-text);
@@ -180,11 +241,11 @@ main {
 }
 
 .cart-toast {
-    background: var(--color-blue-tint);
-    border: 1px solid var(--color-blue);
+    background: var(--color-accent-tint);
+    border: 1px solid var(--color-accent);
     border-radius: 8px;
     padding: 0.6rem 1rem;
-    color: var(--color-blue-strong);
+    color: var(--color-accent-strong);
     font-size: 0.9rem;
     text-align: center;
 }
@@ -210,10 +271,11 @@ main {
 
 .product-card .icon {
     font-size: 2.2rem;
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 .product-name {
+    font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 600;
     color: var(--color-text);
@@ -232,13 +294,15 @@ main {
 .product-price {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--color-blue-strong);
+    color: var(--color-accent-strong);
     margin-top: 0.2rem;
 }
 
 .btn-add {
     margin-top: 0.4rem;
-    background: var(--color-blue);
+    /* The darker accent shade, not the base one — needed for the white
+       label text on top of it to stay readable (contrast ratio). */
+    background: var(--color-accent-strong);
     color: var(--color-surface);
     border: none;
     border-radius: 999px;
@@ -246,11 +310,11 @@ main {
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: filter 0.15s ease;
 }
 
 .btn-add:hover {
-    background: var(--color-blue-strong);
+    filter: brightness(0.9);
 }
 
 /* Cart page */
@@ -283,7 +347,7 @@ main {
 
 .cart-line .icon {
     font-size: 1.8rem;
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 .cart-line-name {
@@ -313,8 +377,8 @@ main {
 
 .cart-qty-form button,
 .btn-remove {
-    background: var(--color-blue-tint);
-    color: var(--color-blue-strong);
+    background: var(--color-accent-tint);
+    color: var(--color-accent-strong);
     border: 1px solid var(--color-border);
     border-radius: 6px;
     padding: 0.35rem 0.7rem;
@@ -328,7 +392,7 @@ main {
 }
 
 .btn-remove:hover {
-    color: var(--color-gold-text);
+    color: var(--color-text);
 }
 
 .cart-line-subtotal {
@@ -350,8 +414,8 @@ main {
 .btn-checkout {
     display: block;
     text-align: center;
-    background: var(--color-gold);
-    color: var(--color-text);
+    background: var(--color-text);
+    color: var(--color-surface);
     text-decoration: none;
     font-weight: 700;
     border-radius: 8px;
@@ -361,6 +425,159 @@ main {
 
 .btn-checkout:hover {
     filter: brightness(0.95);
+}
+
+/* Deck reservation page */
+.reservas-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reserva-toast {
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.reserva-toast-error {
+    background: var(--color-accent-tint);
+    border: 1px solid var(--color-text);
+    color: var(--color-text);
+}
+
+.reserva-toast-ok {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--color-accent-tint);
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent-strong);
+}
+
+.reserva-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+}
+
+.reserva-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-top: 0.6rem;
+}
+
+.reserva-form input,
+.reserva-form select {
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.reserva-form .btn-add {
+    margin-top: 1.2rem;
+    align-self: flex-start;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    margin-top: 0.2rem;
+}
+
+.deck-list {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    padding: 1.2rem 1.5rem;
+}
+
+.deck-list h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.6rem;
+}
+
+.deck-list ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.3rem 1rem;
+}
+
+.deck-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.deck-list a {
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.deck-list a:hover {
+    text-decoration: underline;
+}
+
+.deck-reserved-tag {
+    display: none;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--color-red);
+    border: 1px solid var(--color-red);
+    border-radius: 999px;
+    padding: 0.05rem 0.4rem;
+}
+
+.deck-list li.deck-reserved a {
+    color: var(--color-red);
+    text-decoration: line-through;
+}
+
+.deck-list li.deck-reserved .deck-reserved-tag {
+    display: inline-block;
+}
+
+.reservas-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.reservas-table th,
+.reservas-table td {
+    text-align: left;
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.reservas-table th {
+    font-family: var(--font-display);
+    background: var(--color-accent-tint);
+    color: var(--color-accent-strong);
 }
 
 /* Placeholder page for sections without a real page yet */
@@ -379,7 +596,7 @@ main {
 
 .placeholder-section .icon {
     font-size: 3rem;
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 .placeholder-desc {
@@ -388,7 +605,8 @@ main {
 }
 
 .placeholder-soon {
-    color: var(--color-gold-text);
+    font-family: var(--font-display-caps);
+    color: var(--color-text);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -403,7 +621,7 @@ main {
 }
 
 .back-home:hover {
-    color: var(--color-blue);
+    color: var(--color-accent);
 }
 
 /* No events */
@@ -432,6 +650,7 @@ main {
 }
 
 .month-label {
+    font-family: var(--font-display);
     text-align: center;
     color: var(--color-text);
     font-size: 1.3rem;
@@ -456,8 +675,10 @@ main {
 }
 
 .nav-arrow:hover {
-    background: var(--color-blue);
-    border-color: var(--color-blue);
+    /* The darker accent shade — needed for the white arrow glyph on top
+       of it to stay readable (contrast ratio). */
+    background: var(--color-accent-strong);
+    border-color: var(--color-accent-strong);
     color: var(--color-surface);
 }
 
@@ -470,6 +691,7 @@ main {
 }
 
 .weekday-header span {
+    font-family: var(--font-display-caps);
     text-align: center;
     font-size: 0.75rem;
     color: var(--color-text-tertiary);
@@ -491,7 +713,7 @@ main {
     position: relative;
     z-index: 1;
     aspect-ratio: 1 / 1;
-    background: var(--color-blue-tint);
+    background: var(--color-accent-tint);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
@@ -506,11 +728,11 @@ main {
 }
 
 .calendar-day.today {
-    box-shadow: inset 0 0 0 2px var(--color-gold);
+    box-shadow: inset 0 0 0 2px var(--color-text);
 }
 
 .calendar-day.has-events {
-    background: var(--color-blue-tint-strong);
+    background: var(--color-accent-tint-strong);
 }
 
 /* Everything faded for days outside the current month — but only the
@@ -545,7 +767,7 @@ main {
 }
 
 .calendar-day.today .day-number {
-    color: var(--color-gold-text);
+    color: var(--color-text);
 }
 
 .event-dots {
@@ -561,7 +783,7 @@ main {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--color-blue);
+    background: var(--color-accent);
     flex-shrink: 0;
 }
 
@@ -583,10 +805,10 @@ main {
     width: max-content;
     max-width: 240px;
     background: var(--color-surface);
-    border: 1px solid var(--color-blue);
+    border: 1px solid var(--color-accent);
     border-radius: 8px;
     padding: 0.6rem;
-    box-shadow: 0 10px 24px rgba(31, 78, 122, 0.18);
+    box-shadow: 0 10px 24px rgba(24, 34, 61, 0.18);
     text-align: left;
     opacity: 0;
     visibility: hidden;
@@ -604,8 +826,8 @@ main {
 /* Each event is its own card, accented with the same color it has in
    Google Calendar, so multiple events on one day are clearly separated. */
 .tooltip-event {
-    background: var(--color-blue-tint);
-    border-left: 3px solid var(--color-blue);
+    background: var(--color-accent-tint);
+    border-left: 3px solid var(--color-accent);
     border-radius: 5px;
     padding: 0.5rem 0.6rem;
 }
@@ -622,8 +844,8 @@ main {
 }
 
 .tooltip-badge {
-    background: var(--color-gold);
-    color: var(--color-text);
+    background: var(--color-text);
+    color: var(--color-surface);
     font-size: 0.6rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -650,7 +872,7 @@ main {
 footer {
     text-align: center;
     padding: 1.2rem;
-    background: var(--color-blue-tint);
+    background: var(--color-accent-tint);
     border-top: 1px solid var(--color-border);
     color: var(--color-text-secondary);
     font-size: 0.85rem;
@@ -658,12 +880,24 @@ footer {
 
 /* Responsive */
 @media (max-width: 600px) {
+    header {
+        height: 5.5rem;
+        padding: 0 2.8rem;
+    }
+
     .header-content h1 {
         font-size: 1.5rem;
     }
 
+    .logo-link {
+        left: 0.8rem;
+    }
+
+    .logo {
+        height: 2.1rem;
+    }
+
     .cart-link {
-        top: 0.8rem;
         right: 0.8rem;
     }
 

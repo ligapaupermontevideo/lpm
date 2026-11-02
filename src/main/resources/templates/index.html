@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liga Pauper Montevideo - Calendario</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<header th:replace="fragments/layout :: header('Calendario de Eventos')"></header>
+<header th:replace="~{fragments/layout :: header('Calendario de Eventos')}"></header>
 
 <main>
     <section class="calendar-section">
@@ -75,7 +77,7 @@
     </section>
 </main>
 
-<footer th:replace="fragments/layout :: footer"></footer>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 </body>
 </html>
