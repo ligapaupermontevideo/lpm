@@ -1,0 +1,8 @@
+target/
+.idea/
+*.iml
+.claude/settings.local.json
+
+# Real secrets and machine-specific config — see .env.example for the
+# required keys. Never commit this file.
+.env

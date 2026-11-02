@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Carrito</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header('Carrito de Compras')}"></header>
+
+<main>
+    <section class="cart-section">
+        <div th:if="${#lists.isEmpty(lines)}" class="no-events">
+            Tu carrito esta vacio.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(lines)}" class="cart-lines">
+            <div class="cart-line" th:each="line : ${lines}">
+                <span th:replace="~{fragments/icons :: icon(${line.product.icon})}"></span>
+
+                <div class="cart-line-info">
+                    <p class="cart-line-name" th:text="${line.product.name}">Producto</p>
+                    <p class="cart-line-price" th:text="|$ ${line.product.price} c/u|">$0 c/u</p>
+                </div>
+
+                <form method="post" th:action="@{/carrito/actualizar}" class="cart-qty-form">
+                    <input type="hidden" name="productId" th:value="${line.product.id}"/>
+                    <input type="number" name="quantity" min="1" th:value="${line.quantity}"/>
+                    <button type="submit">Actualizar</button>
+                </form>
+
+                <p class="cart-line-subtotal" th:text="|$ ${line.subtotal}|">$0</p>
+
+                <form method="post" th:action="@{/carrito/eliminar}">
+                    <input type="hidden" name="productId" th:value="${line.product.id}"/>
+                    <button type="submit" class="btn-remove">Quitar</button>
+                </form>
+            </div>
+
+            <div class="cart-total">
+                <span>Total</span>
+                <span th:text="|$ ${total}|">$0</span>
+            </div>
+
+            <a class="btn-checkout" th:href="${whatsappUrl}" target="_blank" rel="noopener">
+                Confirmar pedido por WhatsApp
+            </a>
+        </div>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

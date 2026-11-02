@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Inicio</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header('')}"></header>
+
+<main>
+    <section class="home-section">
+        <div class="section-grid">
+            <a th:each="section : ${sections}"
+               class="section-card"
+               th:href="@{${section.url}}">
+                <span th:replace="~{fragments/icons :: icon(${section.icon})}"></span>
+                <span class="section-name" th:text="${section.name}">Nombre</span>
+                <span class="section-desc" th:text="${section.description}">Descripcion</span>
+            </a>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

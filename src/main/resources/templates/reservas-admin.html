@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Reservas</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header('Reservas de decks')}"></header>
+
+<main>
+    <section class="reservas-section">
+        <div th:if="${#lists.isEmpty(reservations)}" class="no-events">
+            Todavia no hay reservas.
+        </div>
+
+        <table th:unless="${#lists.isEmpty(reservations)}" class="reservas-table">
+            <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Nombre</th>
+                <th>Cedula</th>
+                <th>Deck</th>
+                <th>Reservado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${reservations}">
+                <td th:text="${r.date}">Fecha</td>
+                <td th:text="${r.fullName}">Nombre</td>
+                <td th:text="${r.cedula}">Cedula</td>
+                <td th:text="${r.deckName}">Deck</td>
+                <td th:text="${r.createdAt}">Creado</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

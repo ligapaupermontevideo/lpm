@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Calendario</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header('Calendario de Eventos')}"></header>
+
+<main>
+    <section class="calendar-section">
+
+        <div class="calendar-month">
+            <div class="month-nav">
+                <a class="nav-arrow" th:href="@{/calendario(year=${prevYear}, month=${prevMonth})}" aria-label="Mes anterior">&#10094;</a>
+                <h2 class="month-label" th:text="${month.label}">Mes Anio</h2>
+                <a class="nav-arrow" th:href="@{/calendario(year=${nextYear}, month=${nextMonth})}" aria-label="Mes siguiente">&#10095;</a>
+            </div>
+
+            <div class="weekday-header">
+                <span>Lun</span><span>Mar</span><span>Mi&eacute;</span><span>Jue</span><span>Vie</span><span>S&aacute;b</span><span>Dom</span>
+            </div>
+
+            <div class="calendar-grid" th:each="week : ${month.weeks}">
+                <div th:each="day : ${week}"
+                     class="calendar-day"
+                     th:classappend="${(day.prevMonth ? 'prev-outside' : (day.nextMonth ? 'next-outside' : '')) + (day.today ? ' today' : '') + (day.hasEvents ? ' has-events' : '')}">
+
+                    <div class="day-content">
+                        <span class="day-number" th:text="${day.dayNumber}">1</span>
+                        <div th:if="${day.hasEvents}" class="event-dots">
+                            <span th:each="event, iter : ${day.events}"
+                                  th:if="${iter.index lt 5}"
+                                  class="event-dot"
+                                  th:style="|background: ${event.colorHex};|"></span>
+                            <span th:if="${#lists.size(day.events) gt 5}"
+                                  class="event-more"
+                                  th:text="${'+' + (#lists.size(day.events) - 5)}">+2</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${day.hasEvents}" class="day-tooltip">
+                        <div th:each="event : ${day.events}" class="tooltip-event"
+                             th:style="|border-left-color: ${event.colorHex};|">
+                            <p class="tooltip-title">
+                                <span th:text="${event.title}">Evento</span>
+                                <span th:if="${event.multiDay}" class="tooltip-badge">Varios d&iacute;as</span>
+                            </p>
+
+                            <p class="tooltip-meta" th:if="${event.allDay and !event.multiDay}">Todo el d&iacute;a</p>
+                            <p class="tooltip-meta" th:if="${event.allDay and event.multiDay}"
+                               th:text="|${#temporals.format(event.start, 'dd MMM', new java.util.Locale('es'))} - ${#temporals.format(event.displayEndDate, 'dd MMM', new java.util.Locale('es'))}|">
+                                Rango de fechas
+                            </p>
+                            <p class="tooltip-meta" th:if="${!event.allDay and !event.multiDay}"
+                               th:text="${#temporals.format(event.start, 'HH:mm') + ' - ' + #temporals.format(event.end, 'HH:mm')}">
+                                Hora
+                            </p>
+                            <p class="tooltip-meta" th:if="${!event.allDay and event.multiDay}"
+                               th:text="|${#temporals.format(event.start, 'dd MMM HH:mm', new java.util.Locale('es'))} - ${#temporals.format(event.end, 'dd MMM HH:mm', new java.util.Locale('es'))}|">
+                                Rango con hora
+                            </p>
+
+                            <p class="tooltip-meta" th:if="${event.location}" th:text="${event.location}">Lugar</p>
+                            <p class="tooltip-desc" th:if="${event.description}" th:text="${event.description}">Descripcion</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
