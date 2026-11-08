@@ -83,6 +83,9 @@
     </dependencies>
 
     <build>
+        <!-- Fixed name so the Dockerfile can COPY a stable path instead of
+             a version-stamped jar filename. -->
+        <finalName>app</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
