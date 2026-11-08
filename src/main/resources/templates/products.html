@@ -26,7 +26,7 @@
                 <h3 class="product-name" th:text="${product.name}">Producto</h3>
                 <p class="product-desc" th:text="${product.description}">Descripcion</p>
                 <p class="product-price" th:text="|$ ${product.price}|">$0</p>
-                <form method="post" th:action="@{/carrito/agregar}">
+                <form th:if="${cartEnabled}" method="post" th:action="@{/carrito/agregar}">
                     <input type="hidden" name="productId" th:value="${product.id}"/>
                     <input type="hidden" name="from" th:value="${section.url}"/>
                     <button type="submit" class="btn-add">Agregar al carrito</button>

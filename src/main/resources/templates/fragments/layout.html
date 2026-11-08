@@ -17,7 +17,7 @@
         </a>
         <p class="subtitle" th:text="${subtitle}">Subtitulo</p>
     </div>
-    <a class="cart-link" th:href="@{/carrito}" aria-label="Carrito de compras">
+    <a th:if="${cartEnabled}" class="cart-link" th:href="@{/carrito}" aria-label="Carrito de compras">
         <span th:replace="~{fragments/icons :: icon('cart')}"></span>
         <span th:if="${cartItemCount > 0}" class="cart-badge" th:text="${cartItemCount}">0</span>
     </a>

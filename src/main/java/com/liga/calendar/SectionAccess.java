@@ -47,6 +47,26 @@ public class SectionAccess {
         return section;
     }
 
+    /**
+     * Same on/off switch as {@link #requireEnabled(String)}, for a feature
+     * that has no {@link Section} card of its own on the home page (e.g.
+     * the cart) — checks {@code liga.sections.enabled.<slug>} directly
+     * without requiring a matching Section to exist.
+     */
+    public boolean isFeatureEnabled(String slug) {
+        return properties.getEnabled().getOrDefault(slug, true);
+    }
+
+    /**
+     * 404s if the feature named by {@code slug} has been disabled. See
+     * {@link #isFeatureEnabled(String)}.
+     */
+    public void requireFeatureEnabled(String slug) {
+        if (!isFeatureEnabled(slug)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
+
     private String slug(Section section) {
         return section.url().substring(1);
     }

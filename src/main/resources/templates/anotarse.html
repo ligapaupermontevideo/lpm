@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Pauper Montevideo - Anotarse</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header('Anotarse a una fecha')}"></header>
+
+<main>
+    <section class="reservas-section">
+        <p th:if="${errorMessage}" class="reserva-toast reserva-toast-error" th:text="${errorMessage}">Error</p>
+
+        <div th:if="${confirmedDate}" class="reserva-toast reserva-toast-ok">
+            <p>
+                Te anotaste para el <strong th:text="${confirmedDate}">fecha</strong>.
+            </p>
+            <a class="btn-checkout" th:href="${whatsappUrl}" target="_blank" rel="noopener">
+                Confirmar por WhatsApp
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(availableDates)}" class="no-events">
+            No hay fechas oficiales cargadas por ahora. Volve a revisar mas adelante.
+        </div>
+
+        <form th:if="${!#lists.isEmpty(availableDates)}"
+              method="post" th:action="@{/calendario/anotarse}" class="reserva-form">
+
+            <label for="nombre">Nombre completo</label>
+            <input type="text" id="nombre" name="nombre" required/>
+
+            <label for="cedula">Cedula de identidad</label>
+            <input type="text" id="cedula" name="cedula" placeholder="1.234.567-8" required/>
+
+            <label for="fecha">Fecha</label>
+            <select id="fecha" name="fecha" required>
+                <option th:each="date : ${availableDates}" th:value="${date.value}" th:text="${date.label}"
+                        th:selected="${date.value == selectedDate}">Fecha</option>
+            </select>
+
+            <button type="submit" class="btn-add">Anotarme</button>
+        </form>
+
+        <a class="back-home" th:href="@{/calendario}">&larr; Volver al calendario</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

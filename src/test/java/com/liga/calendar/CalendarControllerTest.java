@@ -8,10 +8,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
@@ -100,11 +102,15 @@ class CalendarControllerTest {
 
         ArgumentCaptor<LocalDate> fromCaptor = ArgumentCaptor.forClass(LocalDate.class);
         ArgumentCaptor<LocalDate> toCaptor = ArgumentCaptor.forClass(LocalDate.class);
-        verify(calendarService).getEvents(fromCaptor.capture(), toCaptor.capture());
+        // index() fetches twice: once for the displayed grid range, and once
+        // (inside buildSignupUrls/registrableEventsByDate) over a 12-month
+        // horizon to find the nearest registrable week — only the first
+        // call's range is this test's concern.
+        verify(calendarService, org.mockito.Mockito.atLeastOnce()).getEvents(fromCaptor.capture(), toCaptor.capture());
 
         LocalDate[] expected = CalendarGridBuilder.gridRange(YearMonth.of(2026, 10));
-        assertThat(fromCaptor.getValue()).isEqualTo(expected[0]);
-        assertThat(toCaptor.getValue()).isEqualTo(expected[1]);
+        assertThat(fromCaptor.getAllValues()).contains(expected[0]);
+        assertThat(toCaptor.getAllValues()).contains(expected[1]);
     }
 
     @Test
@@ -126,7 +132,7 @@ class CalendarControllerTest {
     }
 
     @Test
-    void indexBuildsARegistrationWhatsAppUrlForAnUpcomingSingleDayEvent() {
+    void indexBuildsASignupLinkForAnUpcomingSingleDayEvent() {
         CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
                 LocalDateTime.of(2026, 10, 15, 19, 30),
                 LocalDateTime.of(2026, 10, 15, 23, 30), false);
@@ -137,17 +143,12 @@ class CalendarControllerTest {
         controller.index(2026, 10, model);
 
         @SuppressWarnings("unchecked")
-        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
-        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 15));
-        assertThat(registrationUrls.get(LocalDate.of(2026, 10, 15)))
-                .startsWith("https://wa.me/59800000000?text=")
-                .contains("Me+anoto+para+jugar+esta+fecha+de+la+liga")
-                .contains("Fecha+Oficial")
-                .contains("15%2F10%2F2026");
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls).containsEntry(LocalDate.of(2026, 10, 15), "/calendario/anotarse?fecha=2026-10-15");
     }
 
     @Test
-    void indexOmitsRegistrationForMultiDaySeasonReferenceEvents() {
+    void indexOmitsSignupLinksForMultiDaySeasonReferenceEvents() {
         CalendarEvent season = new CalendarEvent("1", "Temporada Primavera 26", null, null,
                 LocalDateTime.of(2026, 10, 1, 0, 0),
                 LocalDateTime.of(2026, 11, 1, 0, 0), true);
@@ -158,12 +159,15 @@ class CalendarControllerTest {
         controller.index(2026, 10, model);
 
         @SuppressWarnings("unchecked")
-        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
-        assertThat(registrationUrls).isEmpty();
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls).isEmpty();
     }
 
     @Test
-    void indexOmitsRegistrationForDatesThatHaveAlreadyPassed() {
+    void indexOmitsSignupLinksForDatesThatHaveAlreadyPassed() {
+        // 2026-10-10 is a Saturday, so its Mon-Sun week is 10-05..10-11 —
+        // 10-15 falls in the following week and is left out by the
+        // nearest-week restriction, not just by it being "in the past".
         CalendarEvent past = new CalendarEvent("1", "Fecha Oficial", null, null,
                 LocalDateTime.of(2026, 10, 5, 19, 0),
                 LocalDateTime.of(2026, 10, 5, 23, 0), false);
@@ -180,10 +184,46 @@ class CalendarControllerTest {
         controller.index(2026, 10, model);
 
         @SuppressWarnings("unchecked")
-        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
-        assertThat(registrationUrls).doesNotContainKey(LocalDate.of(2026, 10, 5));
-        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 10));
-        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 15));
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls).doesNotContainKey(LocalDate.of(2026, 10, 5));
+        assertThat(signupUrls).containsKey(LocalDate.of(2026, 10, 10));
+        assertThat(signupUrls).doesNotContainKey(LocalDate.of(2026, 10, 15));
+    }
+
+    @Test
+    void signupUrlsOnlyIncludeTheNearestRegistrableWeek() {
+        // Monday 2026-11-02 through Sunday 2026-11-08 is "this week"; the
+        // 11th and 20th fall in later weeks and should be left out.
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        LocalDate nextWeekDate = LocalDate.of(2026, 11, 11);
+        LocalDate laterDate = LocalDate.of(2026, 11, 20);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", thisWeekDate), officialDate("2", nextWeekDate), officialDate("3", laterDate)));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 11, 2)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 11, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls.keySet()).containsExactly(thisWeekDate);
+    }
+
+    @Test
+    void signupUrlsRollOverToNextWeekOnceThisWeekHasNoneLeft() {
+        LocalDate pastThisWeek = LocalDate.of(2026, 11, 4);
+        LocalDate nextWeekDate = LocalDate.of(2026, 11, 11);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", pastThisWeek), officialDate("2", nextWeekDate)));
+        // A Sunday, after this week's only date has already passed.
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 11, 8)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 11, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls.keySet()).containsExactly(nextWeekDate);
     }
 
     @Test
@@ -215,12 +255,227 @@ class CalendarControllerTest {
     void indexIsNotFoundWhenTheSectionIsDisabled() {
         SectionProperties properties = new SectionProperties();
         properties.setEnabled(Map.of("calendario", false));
-        CalendarController controller = new CalendarController(
-                calendarService, new SectionAccess(properties), "59800000000", Clock.systemDefaultZone());
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
+                "59800000000", Clock.systemDefaultZone(), new EventSignupStore());
         Model model = new ConcurrentModel();
 
         assertThatThrownBy(() -> controller.index(null, null, model))
                 .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void signupFormExposesEveryUpcomingSingleDayOfficialDate() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Model model = new ConcurrentModel();
+
+        String view = controller.signupForm(null, model);
+
+        assertThat(view).isEqualTo("anotarse");
+        @SuppressWarnings("unchecked")
+        List<CalendarController.DateOption> dates =
+                (List<CalendarController.DateOption>) model.getAttribute("availableDates");
+        assertThat(dates).extracting(CalendarController.DateOption::value).containsExactly(LocalDate.of(2026, 10, 15));
+    }
+
+    @Test
+    void signupFormOnlyIncludesTheNearestRegistrableWeek() {
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        LocalDate nextWeekDate = LocalDate.of(2026, 11, 11);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", thisWeekDate), officialDate("2", nextWeekDate)));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 11, 2)));
+        Model model = new ConcurrentModel();
+
+        controller.signupForm(null, model);
+
+        assertThat(signupDateValues(model)).containsExactly(thisWeekDate);
+    }
+
+    @Test
+    void sameDayDateIsRegistrableBeforeTheCutoff() {
+        LocalDate sameDay = LocalDate.of(2026, 11, 14);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
+        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(16, 59)));
+        Model model = new ConcurrentModel();
+
+        controller.signupForm(null, model);
+
+        assertThat(signupDateValues(model)).containsExactly(sameDay);
+    }
+
+    @Test
+    void sameDayDateIsNotRegistrableAfterTheCutoff() {
+        LocalDate sameDay = LocalDate.of(2026, 11, 14);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
+        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(17, 0)));
+        Model model = new ConcurrentModel();
+
+        controller.signupForm(null, model);
+
+        assertThat(signupDateValues(model)).isEmpty();
+    }
+
+    @Test
+    void signupFormExposesTheRequestedDateForPreselection() {
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of());
+        CalendarController controller = controller();
+        Model model = new ConcurrentModel();
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+
+        controller.signupForm(fecha, model);
+
+        assertThat(model.getAttribute("selectedDate")).isEqualTo(fecha);
+    }
+
+    @Test
+    void signupFormIsNotFoundWhenTheSectionIsDisabled() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("calendario", false));
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
+                "59800000000", Clock.systemDefaultZone(), new EventSignupStore());
+
+        assertThatThrownBy(() -> controller.signupForm(null, new ConcurrentModel()))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void signUpWithValidDataCreatesSignupAndRedirectsWithConfirmation() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 10, 1)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+
+        String view = controller.signUp("1.234.567-2", "Juan Perez", fecha, redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+        assertThat(store.all()).hasSize(1);
+        assertThat(store.all().get(0).cedula()).isEqualTo("12345672");
+        assertThat(redirectAttributes.getFlashAttributes().get("confirmedDate")).isNotNull();
+        assertThat((String) redirectAttributes.getFlashAttributes().get("whatsappUrl"))
+                .startsWith("https://wa.me/59800000000?text=")
+                .contains("Fecha+Oficial");
+        assertThat(redirectAttributes.getFlashAttributes()).doesNotContainKey("errorMessage");
+    }
+
+    @Test
+    void signUpRejectsBlankName() {
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, Clock.systemDefaultZone());
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "  ", LocalDate.of(2026, 10, 15), redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpRejectsInvalidCedula() {
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, Clock.systemDefaultZone());
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-9", "Juan Perez", LocalDate.of(2026, 10, 15), redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpRejectsDateThatIsNoLongerRegistrable() {
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of());
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, Clock.systemDefaultZone());
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "Juan Perez", LocalDate.of(2026, 10, 15), redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpAllowsSameDayBeforeTheCutoff() {
+        LocalDate sameDay = LocalDate.of(2026, 11, 14);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(16, 59)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.signUp("1.234.567-2", "Juan Perez", sameDay, redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + sameDay);
+        assertThat(store.all()).hasSize(1);
+    }
+
+    @Test
+    void signUpRejectsSameDayAtOrAfterTheCutoff() {
+        LocalDate sameDay = LocalDate.of(2026, 11, 14);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(17, 0)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "Juan Perez", sameDay, redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpRejectsDateOutsideTheNearestWeek() {
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        LocalDate nextWeekDate = LocalDate.of(2026, 11, 11);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", thisWeekDate), officialDate("2", nextWeekDate)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 11, 2)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "Juan Perez", nextWeekDate, redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpRejectsSecondSignupBySamePersonOnSameDate() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 10, 1)));
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        controller.signUp("1.234.567-2", "Juan Perez", fecha, new RedirectAttributesModelMap());
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "Juan Perez", fecha, redirectAttributes);
+
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isEqualTo("Ya estas anotado para esa fecha.");
+        assertThat(store.all()).hasSize(1);
+    }
+
+    @Test
+    void signUpIsRejectedWhenTheSectionIsDisabled() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("calendario", false));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
+                "59800000000", Clock.systemDefaultZone(), store);
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        assertThatThrownBy(() -> controller.signUp("1.234.567-2", "Juan Perez", LocalDate.of(2026, 10, 15), redirectAttributes))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThat(store.all()).isEmpty();
     }
 
     private CalendarController controller() {
@@ -228,11 +483,32 @@ class CalendarControllerTest {
     }
 
     private CalendarController controller(Clock clock) {
-        return new CalendarController(calendarService, new SectionAccess(new SectionProperties()), "59800000000", clock);
+        return controllerWithStore(new EventSignupStore(), clock);
+    }
+
+    private CalendarController controllerWithStore(EventSignupStore store, Clock clock) {
+        return new CalendarController(calendarService, new SectionAccess(new SectionProperties()), "59800000000", clock, store);
     }
 
     private Clock fixedClockAt(LocalDate date) {
         ZoneId zone = ZoneId.of("America/Montevideo");
         return Clock.fixed(date.atStartOfDay(zone).toInstant(), zone);
+    }
+
+    private Clock fixedClockAt(LocalDate date, LocalTime time) {
+        ZoneId zone = ZoneId.of("America/Montevideo");
+        return Clock.fixed(LocalDateTime.of(date, time).atZone(zone).toInstant(), zone);
+    }
+
+    private CalendarEvent officialDate(String id, LocalDate date) {
+        return new CalendarEvent(id, "Fecha Oficial", null, null,
+                date.atTime(19, 0), date.atTime(23, 0), false);
+    }
+
+    private List<LocalDate> signupDateValues(Model model) {
+        @SuppressWarnings("unchecked")
+        List<CalendarController.DateOption> dates =
+                (List<CalendarController.DateOption>) model.getAttribute("availableDates");
+        return dates.stream().map(CalendarController.DateOption::value).toList();
     }
 }

@@ -23,18 +23,24 @@ import java.util.Map;
 @Controller
 public class CartController {
 
+    private static final String FEATURE_SLUG = "carrito";
+
     private final Cart cart;
     private final String whatsappNumber;
+    private final SectionAccess sectionAccess;
 
-    public CartController(Cart cart, @Value("${liga.whatsapp.number}") String whatsappNumber) {
+    public CartController(Cart cart, @Value("${liga.whatsapp.number}") String whatsappNumber,
+                           SectionAccess sectionAccess) {
         this.cart = cart;
         this.whatsappNumber = whatsappNumber;
+        this.sectionAccess = sectionAccess;
     }
 
     @PostMapping("/carrito/agregar")
     public String add(@RequestParam String productId,
                        @RequestParam(defaultValue = "/") String from,
                        RedirectAttributes redirectAttributes) {
+        sectionAccess.requireFeatureEnabled(FEATURE_SLUG);
         cart.add(productId);
         redirectAttributes.addFlashAttribute("added", true);
         return "redirect:" + safeRedirectTarget(from);
@@ -42,18 +48,21 @@ public class CartController {
 
     @PostMapping("/carrito/actualizar")
     public String updateQuantity(@RequestParam String productId, @RequestParam(defaultValue = "1") int quantity) {
+        sectionAccess.requireFeatureEnabled(FEATURE_SLUG);
         cart.setQuantity(productId, quantity);
         return "redirect:/carrito";
     }
 
     @PostMapping("/carrito/eliminar")
     public String remove(@RequestParam String productId) {
+        sectionAccess.requireFeatureEnabled(FEATURE_SLUG);
         cart.remove(productId);
         return "redirect:/carrito";
     }
 
     @GetMapping("/carrito")
     public String view(Model model) {
+        sectionAccess.requireFeatureEnabled(FEATURE_SLUG);
         List<CartLine> lines = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 

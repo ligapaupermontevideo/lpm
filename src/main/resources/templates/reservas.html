@@ -44,7 +44,8 @@
 
             <label for="deckId">Deck</label>
             <select id="deckId" name="deckId" required>
-                <option th:each="deck : ${decks}" th:value="${deck.id}" th:text="${deck.name}">Deck</option>
+                <option th:each="deck : ${decks}" th:value="${deck.id}" th:text="${deck.name}"
+                        th:selected="${deck.id == selectedDeckId}">Deck</option>
             </select>
 
             <label for="fecha">Fecha</label>
@@ -56,17 +57,7 @@
             <button type="submit" class="btn-add">Reservar</button>
         </form>
 
-        <div th:unless="${#lists.isEmpty(decks)}" class="deck-list">
-            <h3>Decks disponibles</h3>
-            <ul>
-                <li th:each="deck : ${decks}" th:attr="data-deck-id=${deck.id}">
-                    <a th:href="${deck.url}" target="_blank" rel="noopener" th:text="${deck.name}">Deck</a>
-                    <span class="deck-reserved-tag">Reservado</span>
-                </li>
-            </ul>
-        </div>
-
-        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+        <a class="back-home" th:href="@{/prestamo-mazos}">&larr; Volver a los decks</a>
     </section>
 </main>
 
@@ -78,7 +69,6 @@
         var reservedByDate = /*[[${reservedByDate}]]*/ {};
         var dateSelect = document.getElementById('fecha');
         var deckSelect = document.getElementById('deckId');
-        var deckListItems = document.querySelectorAll('.deck-list li[data-deck-id]');
 
         Array.prototype.forEach.call(deckSelect.options, function (opt) {
             opt.dataset.label = opt.textContent;
@@ -102,11 +92,6 @@
                     }
                 }
             }
-
-            Array.prototype.forEach.call(deckListItems, function (li) {
-                var taken = reservedIds.indexOf(li.getAttribute('data-deck-id')) !== -1;
-                li.classList.toggle('deck-reserved', taken);
-            });
         }
 
         dateSelect.addEventListener('change', update);

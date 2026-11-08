@@ -46,8 +46,8 @@
                             </div>
                         </div>
 
-                        <a th:if="${registrationUrls[day.date]}" class="day-register-btn"
-                           th:href="${registrationUrls[day.date]}" target="_blank" rel="noopener"
+                        <a th:if="${signupUrls[day.date]}" class="day-register-btn"
+                           th:href="${signupUrls[day.date]}"
                            title="Me anoto para jugar esta fecha de la liga"
                            aria-label="Me anoto para jugar esta fecha de la liga">
                             <span th:replace="~{fragments/icons :: icon('plus')}"></span>
@@ -134,8 +134,8 @@
                             </div>
                         </div>
 
-                        <a th:if="${registrationUrls[day.date]}" class="agenda-register-btn"
-                           th:href="${registrationUrls[day.date]}" target="_blank" rel="noopener"
+                        <a th:if="${signupUrls[day.date]}" class="agenda-register-btn"
+                           th:href="${signupUrls[day.date]}"
                            aria-label="Me anoto para jugar esta fecha de la liga">
                             <span class="agenda-register-icon">
                                 <span th:replace="~{fragments/icons :: icon('plus')}"></span>

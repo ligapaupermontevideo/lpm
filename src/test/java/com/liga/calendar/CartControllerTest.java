@@ -3,19 +3,22 @@ package com.liga.calendar;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CartControllerTest {
 
     private final Cart cart = new Cart();
-    private final CartController controller = new CartController(cart, "59800000000");
+    private final CartController controller = new CartController(cart, "59800000000", new SectionAccess(new SectionProperties()));
 
     @Test
     void addPutsProductInCartAndRedirectsBackToOrigin() {
@@ -122,5 +125,43 @@ class CartControllerTest {
         @SuppressWarnings("unchecked")
         List<CartController.CartLine> lines = (List<CartController.CartLine>) model.getAttribute("lines");
         assertThat(lines).isEmpty();
+    }
+
+    @Test
+    void viewIsNotFoundWhenTheCartIsDisabled() {
+        CartController disabled = disabledController();
+
+        assertThatThrownBy(() -> disabled.view(new ConcurrentModel()))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void addIsNotFoundWhenTheCartIsDisabled() {
+        CartController disabled = disabledController();
+
+        assertThatThrownBy(() -> disabled.add("remera-liga", "/merchandising", new RedirectAttributesModelMap()))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void updateQuantityIsNotFoundWhenTheCartIsDisabled() {
+        CartController disabled = disabledController();
+
+        assertThatThrownBy(() -> disabled.updateQuantity("remera-liga", 2))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void removeIsNotFoundWhenTheCartIsDisabled() {
+        CartController disabled = disabledController();
+
+        assertThatThrownBy(() -> disabled.remove("remera-liga"))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    private CartController disabledController() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("carrito", false));
+        return new CartController(cart, "59800000000", new SectionAccess(properties));
     }
 }

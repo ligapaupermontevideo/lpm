@@ -498,63 +498,102 @@ main {
     margin-top: 0.2rem;
 }
 
-.deck-list {
+/* Deck list (landing page for /prestamo-mazos) */
+.deck-list ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.deck-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 10px;
     box-shadow: var(--shadow-card);
-    padding: 1.2rem 1.5rem;
+    padding: 0.8rem 1rem;
 }
 
-.deck-list h3 {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.6rem;
-}
-
-.deck-list ul {
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.3rem 1rem;
-}
-
-.deck-list li {
+.deck-row-info {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
 }
 
-.deck-list a {
+.deck-name-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+    width: fit-content;
+}
+
+.deck-name-link:hover {
     color: var(--color-accent);
-    font-size: 0.85rem;
+}
+
+/* Tells people the deck name opens Moxfield in another tab, not a plain
+   link within the site. */
+.deck-name-link .icon {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+
+.deck-colors {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.deck-reserve-btn {
+    display: inline-block;
+    flex-shrink: 0;
     text-decoration: none;
 }
 
-.deck-list a:hover {
-    text-decoration: underline;
+/* Mana symbols: fixed, card-accurate colors per pip (not currentColor —
+   unlike the UI icons above, these always render the same regardless of
+   theme, the same way they do on an actual card). */
+.mana-pip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
-.deck-reserved-tag {
-    display: none;
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: var(--color-red);
-    border: 1px solid var(--color-red);
-    border-radius: 999px;
-    padding: 0.05rem 0.4rem;
+.mana-pip svg {
+    width: 65%;
+    height: 65%;
 }
 
-.deck-list li.deck-reserved a {
-    color: var(--color-red);
-    text-decoration: line-through;
+.mana-pip.mana-w {
+    background: #f0f2c0;
 }
 
-.deck-list li.deck-reserved .deck-reserved-tag {
-    display: inline-block;
+.mana-pip.mana-u {
+    background: #b5cde3;
+}
+
+.mana-pip.mana-b {
+    background: #aca29a;
+}
+
+.mana-pip.mana-r {
+    background: #db8664;
+}
+
+.mana-pip.mana-g {
+    background: #93b483;
 }
 
 .reservas-table {

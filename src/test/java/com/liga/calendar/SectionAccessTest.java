@@ -57,4 +57,39 @@ class SectionAccessTest {
         assertThatThrownBy(() -> access.requireEnabled("/no-existe"))
                 .isInstanceOf(ResponseStatusException.class);
     }
+
+    @Test
+    void featureIsEnabledByDefault() {
+        SectionAccess access = new SectionAccess(new SectionProperties());
+
+        assertThat(access.isFeatureEnabled("carrito")).isTrue();
+    }
+
+    @Test
+    void featureIsDisabledWhenSetToFalse() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("carrito", false));
+        SectionAccess access = new SectionAccess(properties);
+
+        assertThat(access.isFeatureEnabled("carrito")).isFalse();
+    }
+
+    @Test
+    void requireFeatureEnabledThrowsNotFoundWhenDisabled() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("carrito", false));
+        SectionAccess access = new SectionAccess(properties);
+
+        assertThatThrownBy(() -> access.requireFeatureEnabled("carrito"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void requireFeatureEnabledDoesNothingWhenEnabled() {
+        SectionAccess access = new SectionAccess(new SectionProperties());
+
+        access.requireFeatureEnabled("carrito");
+    }
 }

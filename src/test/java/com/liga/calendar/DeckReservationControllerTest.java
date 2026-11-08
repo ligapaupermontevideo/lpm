@@ -76,11 +76,23 @@ class DeckReservationControllerTest {
     }
 
     @Test
+    void decksExposesSectionAndDeckList() {
+        Model model = new ConcurrentModel();
+
+        String view = controller("token").decks(model);
+
+        assertThat(view).isEqualTo("decks");
+        assertThat(model.getAttribute("section")).isEqualTo(
+                Section.ALL.stream().filter(s -> s.url().equals("/prestamo-mazos")).findFirst().orElseThrow());
+        assertThat(model.getAttribute("decks")).isEqualTo(DeckCatalog.ALL);
+    }
+
+    @Test
     void formExposesSectionDecksAndAvailableDates() {
         stubAvailableDate();
         Model model = new ConcurrentModel();
 
-        String view = controller("token").form(model);
+        String view = controller("token").form(null, model);
 
         assertThat(view).isEqualTo("reservas");
         assertThat(model.getAttribute("section")).isEqualTo(
@@ -94,13 +106,23 @@ class DeckReservationControllerTest {
     }
 
     @Test
+    void formExposesTheRequestedDeckIdForPreselection() {
+        stubAvailableDate();
+        Model model = new ConcurrentModel();
+
+        controller("token").form(deck.id(), model);
+
+        assertThat(model.getAttribute("selectedDeckId")).isEqualTo(deck.id());
+    }
+
+    @Test
     void reserveWithValidDataCreatesReservationAndRedirects() {
         stubAvailableDate();
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
 
         String view = controller("token").reserve("1.234.567-2", "Juan Perez", deck.id(), eventDate, redirectAttributes);
 
-        assertThat(view).isEqualTo("redirect:/prestamo-mazos");
+        assertThat(view).isEqualTo("redirect:/prestamo-mazos/reservar?deckId=" + deck.id());
         assertThat(store.all()).hasSize(1);
         assertThat(store.all().get(0).cedula()).isEqualTo("12345672");
         assertThat(redirectAttributes.getFlashAttributes().get("confirmedDeck")).isEqualTo(deck.name());
@@ -170,7 +192,7 @@ class DeckReservationControllerTest {
         stubAvailableDate(sameDay);
         Model model = new ConcurrentModel();
 
-        controller("token", fixedClockAt(sameDay, LocalTime.of(16, 59))).form(model);
+        controller("token", fixedClockAt(sameDay, LocalTime.of(16, 59))).form(null, model);
 
         @SuppressWarnings("unchecked")
         List<DeckReservationController.DateOption> dates =
@@ -184,7 +206,7 @@ class DeckReservationControllerTest {
         stubAvailableDate(sameDay);
         Model model = new ConcurrentModel();
 
-        controller("token", fixedClockAt(sameDay, LocalTime.of(17, 0))).form(model);
+        controller("token", fixedClockAt(sameDay, LocalTime.of(17, 0))).form(null, model);
 
         @SuppressWarnings("unchecked")
         List<DeckReservationController.DateOption> dates =
@@ -201,7 +223,7 @@ class DeckReservationControllerTest {
         String view = controller("token", fixedClockAt(sameDay, LocalTime.of(16, 59)))
                 .reserve("1.234.567-2", "Juan Perez", deck.id(), sameDay, redirectAttributes);
 
-        assertThat(view).isEqualTo("redirect:/prestamo-mazos");
+        assertThat(view).isEqualTo("redirect:/prestamo-mazos/reservar?deckId=" + deck.id());
         assertThat(store.all()).hasSize(1);
     }
 
@@ -228,7 +250,7 @@ class DeckReservationControllerTest {
         stubAvailableDates(List.of(thisWeekDate, nextWeekDate, laterDate));
         Model model = new ConcurrentModel();
 
-        controller("token", fixedClockAt(LocalDate.of(2026, 11, 2), LocalTime.of(10, 0))).form(model);
+        controller("token", fixedClockAt(LocalDate.of(2026, 11, 2), LocalTime.of(10, 0))).form(null, model);
 
         assertThat(availableDateValues(model)).containsExactly(thisWeekDate);
     }
@@ -244,7 +266,7 @@ class DeckReservationControllerTest {
         stubAvailableDates(List.of(monday, wednesday, friday, saturday, nextWeek));
         Model model = new ConcurrentModel();
 
-        controller("token", fixedClockAt(monday, LocalTime.of(10, 0))).form(model);
+        controller("token", fixedClockAt(monday, LocalTime.of(10, 0))).form(null, model);
 
         assertThat(availableDateValues(model)).containsExactly(monday, wednesday, friday, saturday);
     }
@@ -257,9 +279,19 @@ class DeckReservationControllerTest {
         Model model = new ConcurrentModel();
 
         // A Sunday, after this week's only date has already passed.
-        controller("token", fixedClockAt(LocalDate.of(2026, 11, 8), LocalTime.of(20, 0))).form(model);
+        controller("token", fixedClockAt(LocalDate.of(2026, 11, 8), LocalTime.of(20, 0))).form(null, model);
 
         assertThat(availableDateValues(model)).containsExactly(nextWeekDate);
+    }
+
+    @Test
+    void decksIsNotFoundWhenTheSectionIsDisabled() {
+        SectionProperties properties = new SectionProperties();
+        properties.setEnabled(Map.of("prestamo-mazos", false));
+        DeckReservationController disabled = controller("token", Clock.systemDefaultZone(), new SectionAccess(properties));
+
+        assertThatThrownBy(() -> disabled.decks(new ConcurrentModel()))
+                .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
@@ -268,7 +300,7 @@ class DeckReservationControllerTest {
         properties.setEnabled(Map.of("prestamo-mazos", false));
         DeckReservationController disabled = controller("token", Clock.systemDefaultZone(), new SectionAccess(properties));
 
-        assertThatThrownBy(() -> disabled.form(new ConcurrentModel()))
+        assertThatThrownBy(() -> disabled.form(null, new ConcurrentModel()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 

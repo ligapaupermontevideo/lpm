@@ -63,13 +63,23 @@ public class DeckReservationController {
     }
 
     @GetMapping("/prestamo-mazos")
-    public String form(Model model) {
+    public String decks(Model model) {
+        Section section = sectionAccess.requireEnabled("/prestamo-mazos");
+
+        model.addAttribute("section", section);
+        model.addAttribute("decks", DeckCatalog.ALL);
+        return "decks";
+    }
+
+    @GetMapping("/prestamo-mazos/reservar")
+    public String form(@RequestParam(required = false) String deckId, Model model) {
         Section section = sectionAccess.requireEnabled("/prestamo-mazos");
 
         model.addAttribute("section", section);
         model.addAttribute("decks", DeckCatalog.ALL);
         model.addAttribute("availableDates", availableDates().stream().map(this::toDateOption).toList());
         model.addAttribute("reservedByDate", reservedDeckIdsByDateForDisplay());
+        model.addAttribute("selectedDeckId", deckId);
         return "reservas";
     }
 
@@ -85,17 +95,17 @@ public class DeckReservationController {
         String fullName = nombre == null ? "" : nombre.trim();
         if (fullName.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ingresa tu nombre completo.");
-            return "redirect:/prestamo-mazos";
+            return redirectToForm(deckId);
         }
 
         if (!CedulaValidator.isValid(cedula)) {
             redirectAttributes.addFlashAttribute("errorMessage", "La cedula ingresada no es valida.");
-            return "redirect:/prestamo-mazos";
+            return redirectToForm(deckId);
         }
 
         if (!availableDates().contains(fecha)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Esa fecha ya no esta disponible.");
-            return "redirect:/prestamo-mazos";
+            return redirectToForm(deckId);
         }
 
         Deck deck = DeckCatalog.ALL.stream()
@@ -104,7 +114,7 @@ public class DeckReservationController {
                 .orElse(null);
         if (deck == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya no esta disponible.");
-            return "redirect:/prestamo-mazos";
+            return redirectToForm(deckId);
         }
 
         DeckReservation reservation = new DeckReservation(
@@ -122,7 +132,12 @@ public class DeckReservationController {
                 redirectAttributes.addFlashAttribute("whatsappUrl", buildWhatsAppUrl(reservation));
             }
         }
-        return "redirect:/prestamo-mazos";
+        return redirectToForm(deckId);
+    }
+
+    private String redirectToForm(String deckId) {
+        String encoded = URLEncoder.encode(deckId, StandardCharsets.UTF_8);
+        return "redirect:/prestamo-mazos/reservar?deckId=" + encoded;
     }
 
     @GetMapping("/prestamo-mazos/reservas")
