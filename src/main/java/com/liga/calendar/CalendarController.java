@@ -18,11 +18,13 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Controller
 public class CalendarController {
@@ -39,15 +41,17 @@ public class CalendarController {
     private final String whatsappNumber;
     private final Clock clock;
     private final EventSignupStore signupStore;
+    private final DeckReservationStore reservationStore;
 
     public CalendarController(GoogleCalendarService calendarService, SectionAccess sectionAccess,
                                @Value("${liga.whatsapp.number}") String whatsappNumber, Clock clock,
-                               EventSignupStore signupStore) {
+                               EventSignupStore signupStore, DeckReservationStore reservationStore) {
         this.calendarService = calendarService;
         this.sectionAccess = sectionAccess;
         this.whatsappNumber = whatsappNumber;
         this.clock = clock;
         this.signupStore = signupStore;
+        this.reservationStore = reservationStore;
     }
 
     @GetMapping("/calendario")
@@ -75,6 +79,7 @@ public class CalendarController {
         model.addAttribute("nextMonth", next.getMonthValue());
         model.addAttribute("signupUrls", buildSignupUrls(monthView));
         model.addAttribute("hasEventsThisMonth", hasEventsThisMonth(monthView));
+        model.addAttribute("signupsByDate", signupNamesByDate());
         return "index";
     }
 
@@ -97,6 +102,7 @@ public class CalendarController {
     public String signUp(@RequestParam String cedula,
                           @RequestParam String nombre,
                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                          @RequestParam(defaultValue = "propio") String deckChoice,
                           RedirectAttributes redirectAttributes) {
 
         sectionAccess.requireEnabled("/calendario");
@@ -118,21 +124,112 @@ public class CalendarController {
             return redirectToSignupForm(fecha);
         }
 
-        EventSignup signup = new EventSignup(
-                CedulaValidator.normalize(cedula), fullName, fecha, event.getTitle(), LocalDateTime.now(clock));
+        String normalizedCedula = CedulaValidator.normalize(cedula);
+        EventSignup signup = new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock));
 
         EventSignupStore.SignUpResult result = signupStore.signUp(signup);
         if (result == EventSignupStore.SignUpResult.ALREADY_SIGNED_UP) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
-        } else {
-            redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
-            redirectAttributes.addFlashAttribute("whatsappUrl", buildWhatsAppUrl(event));
+            return redirectToSignupForm(fecha);
+        }
+
+        // The deck question is answered right on the signup form itself (two
+        // submit buttons) since nombre/cedula/fecha are already at hand —
+        // no need for a separate page just to ask it.
+        if ("reservar".equals(deckChoice)) {
+            return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
+        }
+
+        redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
+        redirectAttributes.addFlashAttribute("whatsappUrl", buildWhatsAppUrl(event, fullName, normalizedCedula, null));
+        return redirectToSignupForm(fecha);
+    }
+
+    // The actual "reserva de deck" page: shown only after choosing to
+    // reserve, so it never re-asks nombre/cedula/fecha.
+    @GetMapping("/calendario/anotarse/deck/reservar")
+    public String deckList(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha, Model model) {
+        sectionAccess.requireEnabled("/calendario");
+
+        String nombre = (String) model.getAttribute("signupNombre");
+        String cedula = (String) model.getAttribute("signupCedula");
+        if (nombre == null || cedula == null) {
+            return redirectToSignupForm(fecha);
+        }
+
+        if (registrableEventsByDate().get(fecha) == null) {
+            return redirectToSignupForm(fecha);
+        }
+
+        Set<String> reservedDeckIds = reservationStore.reservedDeckIdsByDate().getOrDefault(fecha, Set.of());
+
+        model.addAttribute("fecha", fecha);
+        model.addAttribute("fechaLabel", toDateOption(fecha).label());
+        model.addAttribute("nombre", nombre);
+        model.addAttribute("cedula", cedula);
+        model.addAttribute("decks", DeckCatalog.ALL);
+        model.addAttribute("reservedDeckIds", reservedDeckIds);
+        return "anotarse-deck-reservar";
+    }
+
+    @PostMapping("/calendario/anotarse/deck/reservar")
+    public String reserveDeck(@RequestParam String nombre,
+                               @RequestParam String cedula,
+                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                               @RequestParam String deckId,
+                               RedirectAttributes redirectAttributes) {
+        sectionAccess.requireEnabled("/calendario");
+
+        String fullName = nombre == null ? "" : nombre.trim();
+        if (fullName.isEmpty() || !CedulaValidator.isValid(cedula)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Volve a anotarte, tus datos no son validos.");
+            return redirectToSignupForm(fecha);
+        }
+
+        CalendarEvent event = registrableEventsByDate().get(fecha);
+        if (event == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Esa fecha ya no esta disponible.");
+            return redirectToSignupForm(fecha);
+        }
+
+        Deck deck = DeckCatalog.ALL.stream().filter(d -> d.id().equals(deckId)).findFirst().orElse(null);
+        if (deck == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya no esta disponible.");
+            return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+        }
+
+        String normalizedCedula = CedulaValidator.normalize(cedula);
+        DeckReservation reservation = new DeckReservation(
+                normalizedCedula, fullName, deck.id(), deck.name(), fecha, LocalDateTime.now(clock));
+
+        DeckReservationStore.ReserveResult result = reservationStore.reserve(reservation);
+        switch (result) {
+            case PERSON_ALREADY_RESERVED -> {
+                redirectAttributes.addFlashAttribute("errorMessage", "Ya tenes una reserva para esa fecha.");
+                return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+            }
+            case DECK_ALREADY_TAKEN -> {
+                redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya fue reservado para esa fecha. Elegi otro.");
+                return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+            }
+            case OK -> {
+                redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
+                redirectAttributes.addFlashAttribute("confirmedDeck", deck.name());
+                redirectAttributes.addFlashAttribute("whatsappUrl",
+                        buildWhatsAppUrl(event, fullName, normalizedCedula, deck.name()));
+            }
         }
         return redirectToSignupForm(fecha);
     }
 
     private String redirectToSignupForm(LocalDate fecha) {
         return "redirect:/calendario/anotarse?fecha=" + fecha;
+    }
+
+    private String redirectToDeckList(String nombre, String cedula, LocalDate fecha, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("signupNombre", nombre);
+        redirectAttributes.addFlashAttribute("signupCedula", cedula);
+        return "redirect:/calendario/anotarse/deck/reservar?fecha=" + fecha;
     }
 
     // The agenda (list) view only lists in-month days, unlike the grid which
@@ -160,6 +257,18 @@ public class CalendarController {
             }
         }
         return urls;
+    }
+
+    // Who's signed up for each date, so the calendar can show it publicly —
+    // but only while the date hasn't passed yet; once it has, the list of
+    // attendees is no longer useful to show and just clutters old days.
+    private Map<LocalDate, List<String>> signupNamesByDate() {
+        LocalDate today = LocalDate.now(clock);
+        Map<LocalDate, List<String>> byDate = new LinkedHashMap<>();
+        signupStore.all().stream()
+                .filter(signup -> !signup.date().isBefore(today))
+                .forEach(signup -> byDate.computeIfAbsent(signup.date(), d -> new ArrayList<>()).add(signup.fullName()));
+        return byDate;
     }
 
     // Same "one week at a time" window deck reservations use (see
@@ -221,9 +330,17 @@ public class CalendarController {
         return text.isEmpty() ? text : Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 
-    private String buildWhatsAppUrl(CalendarEvent event) {
-        String message = "Hola! Me anoto para jugar esta fecha de la liga: %s (%s)."
-                .formatted(event.getTitle(), event.getStartDate().format(WHATSAPP_DATE));
+    // deckName is null when the person is bringing their own deck instead
+    // of reserving one of the league's.
+    private String buildWhatsAppUrl(CalendarEvent event, String fullName, String cedula, String deckName) {
+        String deckLine = deckName != null ? "- Deck: " + deckName : "- Lleva su propio deck";
+        String message = """
+                Hola! Me anoto para jugar esta fecha de la liga:
+                - Nombre: %s
+                - Cedula: %s
+                - Fecha: %s (%s)
+                %s"""
+                .formatted(fullName, cedula, event.getStartDate().format(WHATSAPP_DATE), event.getTitle(), deckLine);
 
         String encoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
         return "https://wa.me/" + whatsappNumber + "?text=" + encoded;

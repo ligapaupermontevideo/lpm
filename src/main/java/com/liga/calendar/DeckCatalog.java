@@ -3,8 +3,9 @@ package com.liga.calendar;
 import java.util.List;
 
 /**
- * The decks available to reserve on {@code /prestamo-mazos}, mirrored from
- * the league's public profile at
+ * The decks available to reserve as part of the "anotarse a una fecha" flow
+ * (see {@link CalendarController}), mirrored from the league's public
+ * profile at
  * {@code https://moxfield.com/users/ligapaupermontevideo}.
  * <p>
  * This isn't fetched live: Moxfield's API sits behind Cloudflare, which

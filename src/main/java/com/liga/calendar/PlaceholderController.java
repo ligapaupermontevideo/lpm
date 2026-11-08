@@ -20,7 +20,10 @@ public class PlaceholderController {
         this.sectionAccess = sectionAccess;
     }
 
-    @GetMapping("/{slug}")
+    // The slug must not contain a dot so this catch-all doesn't shadow
+    // root-level static files like /favicon.ico — no real section slug
+    // has one.
+    @GetMapping("/{slug:[^.]+}")
     public String placeholder(@PathVariable String slug, Model model) {
         Section section = sectionAccess.requireEnabled("/" + slug);
 

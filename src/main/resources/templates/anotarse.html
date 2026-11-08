@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon-32x32.png}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
     <title>Liga Pauper Montevideo - Anotarse</title>
     <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
     <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
@@ -18,34 +21,41 @@
 
         <div th:if="${confirmedDate}" class="reserva-toast reserva-toast-ok">
             <p>
-                Te anotaste para el <strong th:text="${confirmedDate}">fecha</strong>.
+                Te anotaste para el <strong th:text="${confirmedDate}">fecha</strong><span
+                    th:if="${confirmedDeck}">, con el deck <strong th:text="${confirmedDeck}">Deck</strong></span>.
             </p>
             <a class="btn-checkout" th:href="${whatsappUrl}" target="_blank" rel="noopener">
                 Confirmar por WhatsApp
             </a>
         </div>
 
-        <div th:if="${#lists.isEmpty(availableDates)}" class="no-events">
-            No hay fechas oficiales cargadas por ahora. Volve a revisar mas adelante.
+        <div th:unless="${confirmedDate}">
+            <div th:if="${#lists.isEmpty(availableDates)}" class="no-events">
+                No hay fechas oficiales cargadas por ahora. Volve a revisar mas adelante.
+            </div>
+
+            <form th:if="${!#lists.isEmpty(availableDates)}"
+                  method="post" th:action="@{/calendario/anotarse}" class="reserva-form">
+
+                <label for="nombre">Nombre completo</label>
+                <input type="text" id="nombre" name="nombre" required/>
+
+                <label for="cedula">Cedula de identidad</label>
+                <input type="text" id="cedula" name="cedula" placeholder="1.234.567-8" required/>
+
+                <label for="fecha">Fecha</label>
+                <select id="fecha" name="fecha" required>
+                    <option th:each="date : ${availableDates}" th:value="${date.value}" th:text="${date.label}"
+                            th:selected="${date.value == selectedDate}">Fecha</option>
+                </select>
+                <br>
+                <p class="deck-choice-label">&iquest;Llev&aacute;s tu propio deck o quer&eacute;s reservar uno de la liga?</p>
+                <div class="deck-choice-options">
+                    <button type="submit" name="deckChoice" value="propio" class="deck-choice-option">Llevo mi propio deck</button>
+                    <button type="submit" name="deckChoice" value="reservar" class="deck-choice-option">Quiero reservar un deck</button>
+                </div>
+            </form>
         </div>
-
-        <form th:if="${!#lists.isEmpty(availableDates)}"
-              method="post" th:action="@{/calendario/anotarse}" class="reserva-form">
-
-            <label for="nombre">Nombre completo</label>
-            <input type="text" id="nombre" name="nombre" required/>
-
-            <label for="cedula">Cedula de identidad</label>
-            <input type="text" id="cedula" name="cedula" placeholder="1.234.567-8" required/>
-
-            <label for="fecha">Fecha</label>
-            <select id="fecha" name="fecha" required>
-                <option th:each="date : ${availableDates}" th:value="${date.value}" th:text="${date.label}"
-                        th:selected="${date.value == selectedDate}">Fecha</option>
-            </select>
-
-            <button type="submit" class="btn-add">Anotarme</button>
-        </form>
 
         <a class="back-home" th:href="@{/calendario}">&larr; Volver al calendario</a>
     </section>
