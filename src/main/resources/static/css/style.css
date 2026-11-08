@@ -204,8 +204,10 @@ main {
     transform: translateY(-2px);
 }
 
-/* Inline SVG section icons — sized via font-size + em so the same markup
-   works at different sizes on the home page and the placeholder page. */
+/* Inline SVG section icons (Lucide, see fragments/icons.html) — sized via
+   font-size + em so the same markup works at different sizes across the
+   site, and colored via `currentColor`, so each usage site themes its icon
+   just by setting its own `color`. */
 .icon {
     display: inline-flex;
 }
@@ -213,7 +215,6 @@ main {
 .icon svg {
     width: 1em;
     height: 1em;
-    shape-rendering: crispEdges;
 }
 
 .section-card .icon {
@@ -708,7 +709,10 @@ main {
     margin-bottom: 4px;
 }
 
-/* Day cell — fixed size square, regardless of event count */
+/* Day cell — fixed size square, regardless of event count. Content is
+   anchored to a fixed top offset (not vertically centered) so every day
+   number lines up at the same height, whether or not that cell also has
+   an event-dots row underneath it. */
 .calendar-day {
     position: relative;
     z-index: 1;
@@ -718,7 +722,8 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 22%;
 }
 
 /* Lift the hovered cell (and its tooltip) above every other week row,
@@ -823,6 +828,158 @@ main {
     transform: translateX(-50%) translateY(0);
 }
 
+/* Small badge pinned to a day cell's corner, independent of the hover
+   tooltip, so registering doesn't require hovering to find it. Only
+   rendered for upcoming "fecha oficial" days (see CalendarController). */
+.day-register-btn {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    border-radius: 50%;
+    background: var(--color-accent-strong);
+    color: var(--color-surface);
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 1px 3px rgba(24, 34, 61, 0.35);
+    z-index: 5;
+    transition: filter 0.15s ease;
+}
+
+.day-register-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Agenda (list) view — a mobile-only alternative to the grid, swapped in by
+   the media query below. A 7-column grid leaves no room for a readable
+   register button at phone widths, so mobile gets a vertical list of date
+   rows instead, each laid out horizontally: date, event info, button. */
+.calendar-agenda {
+    display: none;
+    flex-direction: column;
+    gap: 0.6rem;
+    list-style: none;
+}
+
+.agenda-empty {
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-size: 0.85rem;
+    padding: 1rem 0;
+}
+
+.agenda-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--color-accent-tint);
+    border-radius: 8px;
+    padding: 0.6rem 0.7rem;
+}
+
+.agenda-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.6rem;
+}
+
+.agenda-weekday {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+}
+
+.agenda-daynum {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.agenda-events {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.agenda-event {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+}
+
+.agenda-event-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--color-accent);
+}
+
+.agenda-event-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.agenda-event-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.agenda-event-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    text-transform: capitalize;
+}
+
+.agenda-event-meta .icon {
+    font-size: 0.85em;
+    flex-shrink: 0;
+}
+
+.agenda-register-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 0.62rem;
+    font-weight: 700;
+}
+
+.agenda-register-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+    border-radius: 50%;
+    background: var(--color-accent-strong);
+    color: var(--color-surface);
+    box-shadow: 0 1px 3px rgba(24, 34, 61, 0.35);
+}
+
 /* Each event is its own card, accented with the same color it has in
    Google Calendar, so multiple events on one day are clearly separated. */
 .tooltip-event {
@@ -856,9 +1013,17 @@ main {
 }
 
 .tooltip-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
     color: var(--color-text-secondary);
     font-size: 0.75rem;
     text-transform: capitalize;
+}
+
+.tooltip-meta .icon {
+    font-size: 0.9em;
+    flex-shrink: 0;
 }
 
 .tooltip-desc {
@@ -880,6 +1045,14 @@ footer {
 
 /* Responsive */
 @media (max-width: 600px) {
+    .calendar-grid-view {
+        display: none;
+    }
+
+    .calendar-agenda {
+        display: flex;
+    }
+
     header {
         height: 5.5rem;
         padding: 0 2.8rem;
@@ -995,5 +1168,13 @@ footer {
     .tooltip-meta,
     .tooltip-desc {
         font-size: 0.68rem;
+    }
+
+    .day-register-btn {
+        width: 22px;
+        height: 22px;
+        right: 1px;
+        bottom: 1px;
+        border-width: 1.5px;
     }
 }

@@ -9,8 +9,11 @@ import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +32,7 @@ class CalendarControllerTest {
     @Test
     void indexWithoutParamsUsesCurrentMonth() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         String view = controller.index(null, null, model);
@@ -47,7 +50,7 @@ class CalendarControllerTest {
     @Test
     void indexWithExplicitYearAndMonthUsesThatMonth() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -62,7 +65,7 @@ class CalendarControllerTest {
     @Test
     void indexRollsOverToNextYearInDecember() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         controller.index(2026, 12, model);
@@ -76,7 +79,7 @@ class CalendarControllerTest {
     @Test
     void indexRollsOverToPreviousYearInJanuary() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         controller.index(2026, 1, model);
@@ -90,7 +93,7 @@ class CalendarControllerTest {
     @Test
     void indexFetchesEventsForTheDisplayedGridRange() {
         when(calendarService.getEvents(any(), any())).thenReturn(List.of());
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -107,10 +110,10 @@ class CalendarControllerTest {
     @Test
     void indexPlacesFetchedEventsIntoTheMonthView() {
         CalendarEvent event = new CalendarEvent("1", "Fecha", null, null,
-                java.time.LocalDateTime.of(2026, 10, 15, 19, 30),
-                java.time.LocalDateTime.of(2026, 10, 15, 23, 30), false);
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(new SectionProperties()));
+        CalendarController controller = controller();
         Model model = new ConcurrentModel();
 
         controller.index(2026, 10, model);
@@ -123,13 +126,113 @@ class CalendarControllerTest {
     }
 
     @Test
+    void indexBuildsARegistrationWhatsAppUrlForAnUpcomingSingleDayEvent() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
+        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 15));
+        assertThat(registrationUrls.get(LocalDate.of(2026, 10, 15)))
+                .startsWith("https://wa.me/59800000000?text=")
+                .contains("Me+anoto+para+jugar+esta+fecha+de+la+liga")
+                .contains("Fecha+Oficial")
+                .contains("15%2F10%2F2026");
+    }
+
+    @Test
+    void indexOmitsRegistrationForMultiDaySeasonReferenceEvents() {
+        CalendarEvent season = new CalendarEvent("1", "Temporada Primavera 26", null, null,
+                LocalDateTime.of(2026, 10, 1, 0, 0),
+                LocalDateTime.of(2026, 11, 1, 0, 0), true);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(season));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
+        assertThat(registrationUrls).isEmpty();
+    }
+
+    @Test
+    void indexOmitsRegistrationForDatesThatHaveAlreadyPassed() {
+        CalendarEvent past = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 5, 19, 0),
+                LocalDateTime.of(2026, 10, 5, 23, 0), false);
+        CalendarEvent today = new CalendarEvent("2", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 10, 19, 0),
+                LocalDateTime.of(2026, 10, 10, 23, 0), false);
+        CalendarEvent future = new CalendarEvent("3", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 0),
+                LocalDateTime.of(2026, 10, 15, 23, 0), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(past, today, future));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 10, 10)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> registrationUrls = (Map<LocalDate, String>) model.getAttribute("registrationUrls");
+        assertThat(registrationUrls).doesNotContainKey(LocalDate.of(2026, 10, 5));
+        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 10));
+        assertThat(registrationUrls).containsKey(LocalDate.of(2026, 10, 15));
+    }
+
+    @Test
+    void indexFlagsTheMonthAsHavingEventsOnlyWhenAnInMonthDayHasOne() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 0),
+                LocalDateTime.of(2026, 10, 15, 23, 0), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        CalendarController controller = controller();
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        assertThat(model.getAttribute("hasEventsThisMonth")).isEqualTo(true);
+    }
+
+    @Test
+    void indexFlagsTheMonthAsHavingNoEventsWhenNoneAreFetched() {
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of());
+        CalendarController controller = controller();
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        assertThat(model.getAttribute("hasEventsThisMonth")).isEqualTo(false);
+    }
+
+    @Test
     void indexIsNotFoundWhenTheSectionIsDisabled() {
         SectionProperties properties = new SectionProperties();
         properties.setEnabled(Map.of("calendario", false));
-        CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties));
+        CalendarController controller = new CalendarController(
+                calendarService, new SectionAccess(properties), "59800000000", Clock.systemDefaultZone());
         Model model = new ConcurrentModel();
 
         assertThatThrownBy(() -> controller.index(null, null, model))
                 .isInstanceOf(ResponseStatusException.class);
+    }
+
+    private CalendarController controller() {
+        return controller(Clock.systemDefaultZone());
+    }
+
+    private CalendarController controller(Clock clock) {
+        return new CalendarController(calendarService, new SectionAccess(new SectionProperties()), "59800000000", clock);
+    }
+
+    private Clock fixedClockAt(LocalDate date) {
+        ZoneId zone = ZoneId.of("America/Montevideo");
+        return Clock.fixed(date.atStartOfDay(zone).toInstant(), zone);
     }
 }
