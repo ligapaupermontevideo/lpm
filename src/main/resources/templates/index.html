@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon-32x32.png}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
     <title>Liga Pauper Montevideo - Calendario</title>
     <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
     <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
@@ -84,6 +87,13 @@
                                 </p>
                                 <p class="tooltip-desc" th:if="${event.description}" th:text="${event.description}">Descripcion</p>
                             </div>
+
+                            <div th:if="${!#lists.isEmpty(signupsByDate[day.date])}" class="tooltip-signups">
+                                <p class="tooltip-signups-label">Anotados
+                                    (<span th:text="${#lists.size(signupsByDate[day.date])}">0</span>)</p>
+                                <p class="tooltip-signups-names"
+                                   th:text="${#strings.listJoin(signupsByDate[day.date], ', ')}">Nombres</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -132,6 +142,11 @@
                                     </p>
                                 </div>
                             </div>
+
+                            <p th:if="${!#lists.isEmpty(signupsByDate[day.date])}" class="agenda-signups">
+                                Anotados (<span th:text="${#lists.size(signupsByDate[day.date])}">0</span>):
+                                <span th:text="${#strings.listJoin(signupsByDate[day.date], ', ')}">Nombres</span>
+                            </p>
                         </div>
 
                         <a th:if="${signupUrls[day.date]}" class="agenda-register-btn"
