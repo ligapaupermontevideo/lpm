@@ -6,3 +6,7 @@ target/
 # Real secrets and machine-specific config — see .env.example for the
 # required keys. Never commit this file.
 .env
+
+# Persisted sign-ups/deck reservations (see liga.data.dir in
+# application.properties) — local runtime data, not source.
+/data/

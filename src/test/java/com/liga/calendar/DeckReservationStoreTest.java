@@ -1,7 +1,9 @@
 package com.liga.calendar;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -73,5 +75,27 @@ class DeckReservationStoreTest {
         assertThat(store.reservedDeckIdsByDate())
                 .containsEntry(date, java.util.Set.of("deck-1", "deck-2"))
                 .containsEntry(otherDate, java.util.Set.of("deck-1"));
+    }
+
+    @Test
+    void withoutADataDirNothingIsWrittenToDisk(@TempDir Path tempDir) {
+        store.reserve(reservation("12345672", "deck-1", date));
+
+        assertThat(tempDir.resolve("deck-reservations.json")).doesNotExist();
+    }
+
+    @Test
+    void reservationsSurviveBeingReloadedFromTheDataDir(@TempDir Path tempDir) {
+        DeckReservationStore persisted = new DeckReservationStore();
+        persisted.dataDir = tempDir.toString();
+        persisted.loadFromDisk();
+        persisted.reserve(reservation("12345672", "deck-1", date));
+        persisted.reserve(reservation("41234563", "deck-2", otherDate));
+
+        DeckReservationStore reloaded = new DeckReservationStore();
+        reloaded.dataDir = tempDir.toString();
+        reloaded.loadFromDisk();
+
+        assertThat(reloaded.all()).containsExactlyElementsOf(persisted.all());
     }
 }

@@ -17,9 +17,17 @@ WORKDIR /app
 
 RUN groupadd --system app && useradd --system --gid app app
 COPY --from=build /build/target/app.jar ./app.jar
+RUN mkdir -p /app/data && chown app:app /app/data
 USER app
 
 EXPOSE 8080
+
+# Sign-ups and deck reservations persist here as JSON (see liga.data.dir
+# in application.properties, default ./data relative to WORKDIR /app).
+# Mount a volume at this path so they survive a container recreation —
+# without one, this is just as ephemeral as the old in-memory-only
+# behavior, since the image itself has no durable storage.
+VOLUME ["/app/data"]
 
 # Secrets (GOOGLE_API_KEY, LIGA_ADMIN_TOKEN, etc. — see .env.example) are
 # never baked into the image; the host supplies them as real environment
