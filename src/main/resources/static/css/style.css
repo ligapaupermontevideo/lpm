@@ -959,11 +959,22 @@ main {
 
 .agenda-row {
     display: flex;
-    align-items: center;
-    gap: 0.7rem;
+    flex-direction: column;
+    gap: 0.5rem;
     background: var(--color-accent-tint);
     border-radius: 8px;
     padding: 0.6rem 0.7rem;
+}
+
+/* Date, event info and the register button, laid out side by side — kept
+   separate from .agenda-row so the attendee list below (.agenda-signups)
+   can span the row's full width instead of being squeezed into the
+   narrow middle column, which is what caused it to wrap mid-line on
+   phone-width screens. */
+.agenda-row-main {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
 }
 
 .agenda-date {
@@ -1118,30 +1129,51 @@ main {
     margin-top: 0.3rem;
 }
 
-/* List of people already signed up for the date, shown only while that
-   date hasn't passed yet (see CalendarController#signupNamesByDate). */
+/* Who's signed up for each date, one per line, with the deck they picked
+   (colors included, so the calendar can show its mana pips the same way
+   the deck list does) — shown only while that date hasn't passed yet (see
+   CalendarController#signupInfoByDate). */
 .tooltip-signups {
     border-top: 1px solid var(--color-border);
     padding-top: 0.4rem;
 }
 
-.tooltip-signups-label {
+
+.tooltip-signups-label,
+.agenda-signups-label {
     color: var(--color-text);
     font-size: 0.72rem;
     font-weight: 600;
+    margin: 0;
 }
 
-.tooltip-signups-names {
+.tooltip-signups-list,
+.agenda-signups-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     color: var(--color-text-secondary);
     font-size: 0.72rem;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-.agenda-signups {
-    color: var(--color-text-secondary);
-    font-size: 0.72rem;
-    line-height: 1.4;
-    margin-top: 0.1rem;
+.tooltip-signups-list li,
+.agenda-signups-list li {
+    padding: 0.1rem 0;
+}
+
+.tooltip-signups-list .deck-colors,
+.agenda-signups-list .deck-colors {
+    display: inline-flex;
+    gap: 0.2rem;
+    vertical-align: middle;
+    margin-left: 0.3rem;
+}
+
+.tooltip-signups-list .mana-pip,
+.agenda-signups-list .mana-pip {
+    width: 0.85rem;
+    height: 0.85rem;
 }
 
 /* Footer */

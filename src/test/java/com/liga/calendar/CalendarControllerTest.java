@@ -267,9 +267,14 @@ class CalendarControllerTest {
         controller.index(2026, 10, model);
 
         @SuppressWarnings("unchecked")
-        Map<LocalDate, List<String>> signupsByDate = (Map<LocalDate, List<String>>) model.getAttribute("signupsByDate");
-        assertThat(signupsByDate.get(today)).containsExactly("Juan Perez", "Ana Lopez");
-        assertThat(signupsByDate.get(future)).containsExactly("Pedro Gomez");
+        Map<LocalDate, List<CalendarController.AttendeeInfo>> signupsByDate =
+                (Map<LocalDate, List<CalendarController.AttendeeInfo>>) model.getAttribute("signupsByDate");
+        assertThat(signupsByDate.get(today))
+                .extracting(CalendarController.AttendeeInfo::fullName)
+                .containsExactly("Juan Perez", "Ana Lopez");
+        assertThat(signupsByDate.get(future))
+                .extracting(CalendarController.AttendeeInfo::fullName)
+                .containsExactly("Pedro Gomez");
     }
 
     @Test
@@ -284,8 +289,48 @@ class CalendarControllerTest {
         controller.index(2026, 10, model);
 
         @SuppressWarnings("unchecked")
-        Map<LocalDate, List<String>> signupsByDate = (Map<LocalDate, List<String>>) model.getAttribute("signupsByDate");
+        Map<LocalDate, List<CalendarController.AttendeeInfo>> signupsByDate =
+                (Map<LocalDate, List<CalendarController.AttendeeInfo>>) model.getAttribute("signupsByDate");
         assertThat(signupsByDate).doesNotContainKey(past);
+    }
+
+    @Test
+    void indexShowsTheReservedDeckNameForAnAttendeeWhoReservedOne() {
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of());
+        EventSignupStore store = new EventSignupStore();
+        LocalDate today = LocalDate.of(2026, 10, 10);
+        store.signUp(new EventSignup("12345672", "Juan Perez", today, "Fecha Oficial", LocalDateTime.now()));
+        DeckReservationStore reservationStore = new DeckReservationStore();
+        Deck deck = DeckCatalog.ALL.get(0);
+        reservationStore.reserve(new DeckReservation("12345672", "Juan Perez", deck.id(), deck.name(), today, LocalDateTime.now()));
+        CalendarController controller = controllerWithStores(store, reservationStore, fixedClockAt(today));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, List<CalendarController.AttendeeInfo>> signupsByDate =
+                (Map<LocalDate, List<CalendarController.AttendeeInfo>>) model.getAttribute("signupsByDate");
+        assertThat(signupsByDate.get(today))
+                .containsExactly(new CalendarController.AttendeeInfo("Juan Perez", deck.name(), deck.colors()));
+    }
+
+    @Test
+    void indexShowsOwnDeckForAnAttendeeWhoDidNotReserveOne() {
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of());
+        EventSignupStore store = new EventSignupStore();
+        LocalDate today = LocalDate.of(2026, 10, 10);
+        store.signUp(new EventSignup("12345672", "Juan Perez", today, "Fecha Oficial", LocalDateTime.now()));
+        CalendarController controller = controllerWithStore(store, fixedClockAt(today));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 10, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, List<CalendarController.AttendeeInfo>> signupsByDate =
+                (Map<LocalDate, List<CalendarController.AttendeeInfo>>) model.getAttribute("signupsByDate");
+        assertThat(signupsByDate.get(today))
+                .containsExactly(new CalendarController.AttendeeInfo("Juan Perez", "Propio Deck", List.of()));
     }
 
     @Test
