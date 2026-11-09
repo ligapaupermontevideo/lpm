@@ -1,7 +1,9 @@
 package com.liga.calendar;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -66,5 +68,27 @@ class EventSignupStoreTest {
         store.signUp(third);
 
         assertThat(store.all()).containsExactly(second, third, first);
+    }
+
+    @Test
+    void withoutADataDirNothingIsWrittenToDisk(@TempDir Path tempDir) {
+        store.signUp(signup("12345672", date));
+
+        assertThat(tempDir.resolve("signups.json")).doesNotExist();
+    }
+
+    @Test
+    void signupsSurviveBeingReloadedFromTheDataDir(@TempDir Path tempDir) {
+        EventSignupStore persisted = new EventSignupStore();
+        persisted.dataDir = tempDir.toString();
+        persisted.loadFromDisk();
+        persisted.signUp(signup("12345672", date));
+        persisted.signUp(signup("41234563", otherDate));
+
+        EventSignupStore reloaded = new EventSignupStore();
+        reloaded.dataDir = tempDir.toString();
+        reloaded.loadFromDisk();
+
+        assertThat(reloaded.all()).containsExactlyElementsOf(persisted.all());
     }
 }

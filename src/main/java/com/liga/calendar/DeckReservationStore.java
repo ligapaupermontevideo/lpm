@@ -1,5 +1,7 @@
 package com.liga.calendar;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -13,10 +15,12 @@ import java.util.stream.Collectors;
 /**
  * Holds every deck reservation made through the site.
  * <p>
- * There's no database yet, same as {@link ProductCatalog} — reservations
- * live only in memory and are lost on restart. That's an acceptable
- * trade-off for now since every confirmed reservation is also sent to the
- * league over WhatsApp, which is the actual record the league acts on.
+ * Backed by a JSON file (see {@link JsonFileStore}) so reservations
+ * survive an app restart or redeploy, not just in-memory while the
+ * process runs — same persistence approach as {@link EventSignupStore}.
+ * Every confirmed reservation is also sent to the league over WhatsApp,
+ * which remains the authoritative record either way; the file just saves
+ * people from having to re-send theirs after a restart.
  */
 @Component
 public class DeckReservationStore {
@@ -29,6 +33,22 @@ public class DeckReservationStore {
 
     private final List<DeckReservation> reservations = new CopyOnWriteArrayList<>();
     private final Object lock = new Object();
+
+    // See EventSignupStore#dataDir for why this is left null/blank in
+    // tests and when liga.data.dir is unset, and why it's package-private.
+    @Value("${liga.data.dir:}")
+    String dataDir;
+
+    private JsonFileStore<DeckReservation> fileStore;
+
+    @PostConstruct
+    void loadFromDisk() {
+        if (dataDir == null || dataDir.isBlank()) {
+            return;
+        }
+        fileStore = new JsonFileStore<>(dataDir, "deck-reservations.json", DeckReservation.class);
+        reservations.addAll(fileStore.readAll());
+    }
 
     /**
      * Atomically checks both uniqueness rules and records the reservation
@@ -49,6 +69,9 @@ public class DeckReservationStore {
                 }
             }
             reservations.add(reservation);
+            if (fileStore != null) {
+                fileStore.writeAll(reservations);
+            }
             return ReserveResult.OK;
         }
     }
