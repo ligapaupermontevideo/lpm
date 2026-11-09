@@ -91,8 +91,9 @@
                             <div th:if="${!#lists.isEmpty(signupsByDate[day.date])}" class="tooltip-signups">
                                 <p class="tooltip-signups-label">Anotados
                                     (<span th:text="${#lists.size(signupsByDate[day.date])}">0</span>)</p>
-                                <p class="tooltip-signups-names"
-                                   th:text="${#strings.listJoin(signupsByDate[day.date], ', ')}">Nombres</p>
+                                <ul class="tooltip-signups-list">
+                                    <li th:each="attendee : ${signupsByDate[day.date]}"><span th:text="${attendee.fullName + ' - ' + attendee.deck}">Nombre - Deck</span><span class="deck-colors" th:if="${!#lists.isEmpty(attendee.deckColors)}"><th:block th:each="color : ${attendee.deckColors}"><span th:replace="~{fragments/icons :: mana(${color})}"></span></th:block></span></li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -108,6 +109,7 @@
 
                 <th:block th:each="week : ${month.weeks}">
                     <li th:each="day : ${week}" th:if="${day.inMonth and day.hasEvents}" class="agenda-row">
+                      <div class="agenda-row-main">
                         <div class="agenda-date">
                             <span class="agenda-weekday" th:text="${#temporals.format(day.date, 'EEE', new java.util.Locale('es'))}">Lun</span>
                             <span class="agenda-daynum" th:text="${day.dayNumber}">1</span>
@@ -142,11 +144,6 @@
                                     </p>
                                 </div>
                             </div>
-
-                            <p th:if="${!#lists.isEmpty(signupsByDate[day.date])}" class="agenda-signups">
-                                Anotados (<span th:text="${#lists.size(signupsByDate[day.date])}">0</span>):
-                                <span th:text="${#strings.listJoin(signupsByDate[day.date], ', ')}">Nombres</span>
-                            </p>
                         </div>
 
                         <a th:if="${signupUrls[day.date]}" class="agenda-register-btn"
@@ -157,6 +154,15 @@
                             </span>
                             <span>Anotarme</span>
                         </a>
+                      </div>
+
+                      <div th:if="${!#lists.isEmpty(signupsByDate[day.date])}" class="agenda-signups">
+                          <p class="agenda-signups-label">Anotados
+                              (<span th:text="${#lists.size(signupsByDate[day.date])}">0</span>):</p>
+                          <ul class="agenda-signups-list">
+                              <li th:each="attendee : ${signupsByDate[day.date]}"><span th:text="${attendee.fullName + ' - ' + attendee.deck}">Nombre - Deck</span><span class="deck-colors" th:if="${!#lists.isEmpty(attendee.deckColors)}"><th:block th:each="color : ${attendee.deckColors}"><span th:replace="~{fragments/icons :: mana(${color})}"></span></th:block></span></li>
+                          </ul>
+                      </div>
                     </li>
                 </th:block>
             </ul>

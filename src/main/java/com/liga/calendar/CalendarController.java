@@ -79,7 +79,7 @@ public class CalendarController {
         model.addAttribute("nextMonth", next.getMonthValue());
         model.addAttribute("signupUrls", buildSignupUrls(monthView));
         model.addAttribute("hasEventsThisMonth", hasEventsThisMonth(monthView));
-        model.addAttribute("signupsByDate", signupNamesByDate());
+        model.addAttribute("signupsByDate", signupInfoByDate());
         return "index";
     }
 
@@ -259,16 +259,36 @@ public class CalendarController {
         return urls;
     }
 
-    // Who's signed up for each date, so the calendar can show it publicly —
-    // but only while the date hasn't passed yet; once it has, the list of
-    // attendees is no longer useful to show and just clutters old days.
-    private Map<LocalDate, List<String>> signupNamesByDate() {
+    // Who's signed up for each date, and with which deck (colors included,
+    // so the calendar can show its mana pips the same way the deck list
+    // does), so the calendar can show it publicly — but only while the date
+    // hasn't passed yet; once it has, the list of attendees is no longer
+    // useful to show and just clutters old days.
+    private Map<LocalDate, List<AttendeeInfo>> signupInfoByDate() {
         LocalDate today = LocalDate.now(clock);
-        Map<LocalDate, List<String>> byDate = new LinkedHashMap<>();
+        Map<String, DeckReservation> reservationByCedulaAndDate = new LinkedHashMap<>();
+        reservationStore.all().forEach(reservation ->
+                reservationByCedulaAndDate.put(reservation.cedula() + "|" + reservation.date(), reservation));
+
+        Map<LocalDate, List<AttendeeInfo>> byDate = new LinkedHashMap<>();
         signupStore.all().stream()
                 .filter(signup -> !signup.date().isBefore(today))
-                .forEach(signup -> byDate.computeIfAbsent(signup.date(), d -> new ArrayList<>()).add(signup.fullName()));
+                .forEach(signup -> {
+                    DeckReservation reservation = reservationByCedulaAndDate.get(signup.cedula() + "|" + signup.date());
+                    String deck = reservation != null ? reservation.deckName() : "Propio Deck";
+                    List<String> deckColors = reservation != null ? colorsOf(reservation.deckId()) : List.of();
+                    byDate.computeIfAbsent(signup.date(), d -> new ArrayList<>())
+                            .add(new AttendeeInfo(signup.fullName(), deck, deckColors));
+                });
         return byDate;
+    }
+
+    private List<String> colorsOf(String deckId) {
+        return DeckCatalog.ALL.stream()
+                .filter(deck -> deck.id().equals(deckId))
+                .findFirst()
+                .map(Deck::colors)
+                .orElse(List.of());
     }
 
     // Same "one week at a time" window deck reservations use (see
@@ -347,5 +367,8 @@ public class CalendarController {
     }
 
     public record DateOption(LocalDate value, String label) {
+    }
+
+    public record AttendeeInfo(String fullName, String deck, List<String> deckColors) {
     }
 }
