@@ -318,6 +318,114 @@ main {
     filter: brightness(0.9);
 }
 
+/* Collaborators section — cards styled like trading/baseball cards: a
+   portrait photo (or an initials avatar when none is set) on top, the
+   person's info below. */
+.collaborator-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.collaborator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.2rem;
+}
+
+.collaborator-card {
+    background: var(--color-surface);
+    border: 3px solid var(--color-accent-tint-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.collaborator-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+.collaborator-photo {
+    aspect-ratio: 3 / 4;
+    background: var(--color-accent-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collaborator-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.collaborator-photo-fallback {
+    font-family: var(--font-display);
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--color-accent-strong);
+}
+
+.collaborator-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.3rem;
+    padding: 1rem 1.1rem 1.2rem;
+    flex: 1;
+}
+
+.collaborator-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.collaborator-role {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-accent-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.collaborator-bio {
+    flex: 1;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+}
+
+.collaborator-instagram {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+    border: 1px solid var(--color-accent);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-accent-strong);
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.collaborator-instagram:hover {
+    background: var(--color-accent-tint);
+    transform: translateY(-1px);
+}
+
+.collaborator-instagram .icon {
+    font-size: 0.95rem;
+}
+
 /* Cart page */
 .cart-section {
     display: flex;
@@ -518,25 +626,46 @@ main {
 }
 
 .deck-choice-option {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     width: 100%;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
     border-radius: 10px;
-    box-shadow: var(--shadow-card);
     padding: 1.2rem;
     font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--color-accent-strong);
     cursor: pointer;
     text-align: center;
     transition: filter 0.15s ease, transform 0.15s ease;
 }
 
+.deck-choice-option .icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
 .deck-choice-option:hover {
     filter: brightness(0.97);
     transform: translateY(-1px);
+}
+
+/* The more common path (already own a deck) reads as the solid, filled
+   choice; reserving one of the league's is the lighter, outlined
+   alternative — visual weight does the work of telling them apart instead
+   of relying on the label text alone. */
+.deck-choice-option-primary {
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    box-shadow: var(--shadow-card);
+    color: var(--color-surface);
+}
+
+.deck-choice-option-secondary {
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-accent);
+    color: var(--color-accent-strong);
 }
 
 .deck-list ul {
@@ -602,6 +731,31 @@ main {
     background: var(--color-border);
     color: var(--color-text-tertiary);
     cursor: not-allowed;
+}
+
+/* Deck list page (mazos.html) — a card grid instead of the row list above,
+   so it doesn't read as the reservation flow with the button missing. */
+.deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.9rem;
+}
+
+.deck-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    padding: 0.9rem 1rem;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.deck-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
 }
 
 /* Mana symbols: fixed, card-accurate colors per pip (not currentColor —
@@ -893,7 +1047,7 @@ main {
     flex-direction: column;
     gap: 0.5rem;
     width: max-content;
-    max-width: 240px;
+    max-width: 320px;
     background: var(--color-surface);
     border: 1px solid var(--color-accent);
     border-radius: 8px;
@@ -1159,12 +1313,24 @@ main {
 
 .tooltip-signups-list li,
 .agenda-signups-list li {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
     padding: 0.1rem 0;
+}
+
+.tooltip-signups-list li > span:first-child,
+.agenda-signups-list li > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .tooltip-signups-list .deck-colors,
 .agenda-signups-list .deck-colors {
     display: inline-flex;
+    flex-shrink: 0;
     gap: 0.2rem;
     vertical-align: middle;
     margin-left: 0.3rem;
@@ -1319,5 +1485,15 @@ footer {
         right: 1px;
         bottom: 1px;
         border-width: 1.5px;
+    }
+
+    .deck-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+
+    .deck-card {
+        padding: 0.7rem 0.75rem;
+        gap: 0.4rem;
     }
 }

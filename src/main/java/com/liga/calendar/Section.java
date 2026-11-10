@@ -21,6 +21,8 @@ public record Section(String name, String description, String url, String icon) 
             new Section("Calendario", "Fechas oficiales y más", "/calendario", "calendar"),
             new Section("Accesorios", "Fundas, playmats y accesorios para tus partidas", "/accesorios", "bag"),
             new Section("Tokens", "Tokens y fichas para tus mazos", "/tokens", "coin"),
-            new Section("Merchandising", "Remeras, stickers y otros productos de la liga", "/merchandising", "shirt")
+            new Section("Merchandising", "Remeras, stickers y otros productos de la liga", "/merchandising", "shirt"),
+            new Section("Colaboradores", "La gente detrás de la liga", "/colaboradores", "users"),
+            new Section("Mazos", "Los decks de la liga disponibles para reservar", "/mazos", "cards")
     );
 }

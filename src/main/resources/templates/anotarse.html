@@ -51,8 +51,14 @@
                 <br>
                 <p class="deck-choice-label">&iquest;Llev&aacute;s tu propio deck o quer&eacute;s reservar uno de la liga?</p>
                 <div class="deck-choice-options">
-                    <button type="submit" name="deckChoice" value="propio" class="deck-choice-option">Llevo mi propio deck</button>
-                    <button type="submit" name="deckChoice" value="reservar" class="deck-choice-option">Quiero reservar un deck</button>
+                    <button type="submit" name="deckChoice" value="propio" class="deck-choice-option deck-choice-option-primary">
+                        <span th:replace="~{fragments/icons :: icon('cards')}"></span>
+                        Llevo mi propio deck
+                    </button>
+                    <button type="submit" name="deckChoice" value="reservar" class="deck-choice-option deck-choice-option-secondary">
+                        <span th:replace="~{fragments/icons :: icon('bag')}"></span>
+                        Quiero reservar un deck
+                    </button>
                 </div>
             </form>
         </div>

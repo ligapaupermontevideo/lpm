@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon-32x32.png}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+    <title th:text="|Liga Pauper Montevideo - ${section.name}|">Liga Pauper Montevideo</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header(${section.name})}"></header>
+
+<main>
+    <section class="collaborator-section">
+        <div th:if="${#lists.isEmpty(collaborators)}" class="no-events">
+            Todavia no hay colaboradores cargados.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(collaborators)}" class="collaborator-grid">
+            <div class="collaborator-card" th:each="collaborator : ${collaborators}">
+                <div class="collaborator-photo">
+                    <img th:if="${collaborator.photo}" th:src="@{${collaborator.photo}}" th:alt="${collaborator.name}">
+                    <span th:unless="${collaborator.photo}" class="collaborator-photo-fallback"
+                          th:text="${collaborator.initials()}">XX</span>
+                </div>
+                <div class="collaborator-info">
+                    <h3 class="collaborator-name" th:text="${collaborator.name}">Nombre</h3>
+                    <p class="collaborator-role" th:text="${collaborator.role}">Rol</p>
+                    <p class="collaborator-bio" th:text="${collaborator.bio}">Bio</p>
+                    <a th:if="${collaborator.instagramUrl}" class="collaborator-instagram"
+                       th:href="${collaborator.instagramUrl}" target="_blank" rel="noopener">
+                        <span th:replace="~{fragments/icons :: icon('instagram')}"></span>
+                        Instagram
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
