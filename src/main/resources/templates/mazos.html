@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon-32x32.png}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+    <title th:text="|Liga Pauper Montevideo - ${section.name}|">Liga Pauper Montevideo</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header(${section.name})}"></header>
+
+<main>
+    <section class="reservas-section">
+        <div th:if="${#lists.isEmpty(decks)}" class="no-events">
+            No se pudo cargar la lista de decks en este momento. Volve a intentar mas tarde.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(decks)}" class="deck-grid">
+            <div th:each="deck : ${decks}" class="deck-card">
+                <a class="deck-name-link" th:href="${deck.url}" target="_blank" rel="noopener"
+                   th:title="|Ver ${deck.name} en Moxfield (se abre en otra pestaña)|">
+                    <span th:text="${deck.name}">Deck</span>
+                    <span th:replace="~{fragments/icons :: icon('external-link')}"></span>
+                </a>
+                <span class="deck-colors">
+                    <th:block th:each="color : ${deck.colors}">
+                        <span th:replace="~{fragments/icons :: mana(${color})}"></span>
+                    </th:block>
+                </span>
+            </div>
+        </div>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

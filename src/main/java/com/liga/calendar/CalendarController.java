@@ -31,10 +31,10 @@ public class CalendarController {
 
     private static final DateTimeFormatter WHATSAPP_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // Same-day sign-ups close at 17:00, same cutoff and reasoning as deck
+    // Same-day sign-ups close at 18:00, same cutoff and reasoning as deck
     // reservations — the league needs time to prepare before that day's
     // event.
-    private static final LocalTime SAME_DAY_CUTOFF = LocalTime.of(17, 0);
+    private static final LocalTime SAME_DAY_CUTOFF = LocalTime.of(18, 0);
 
     private final GoogleCalendarService calendarService;
     private final SectionAccess sectionAccess;

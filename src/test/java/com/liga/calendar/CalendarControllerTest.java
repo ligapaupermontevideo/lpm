@@ -381,7 +381,7 @@ class CalendarControllerTest {
     void sameDayDateIsRegistrableBeforeTheCutoff() {
         LocalDate sameDay = LocalDate.of(2026, 11, 14);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
-        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(16, 59)));
+        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(17, 59)));
         Model model = new ConcurrentModel();
 
         controller.signupForm(null, model);
@@ -393,7 +393,7 @@ class CalendarControllerTest {
     void sameDayDateIsNotRegistrableAfterTheCutoff() {
         LocalDate sameDay = LocalDate.of(2026, 11, 14);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
-        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(17, 0)));
+        CalendarController controller = controller(fixedClockAt(sameDay, LocalTime.of(18, 0)));
         Model model = new ConcurrentModel();
 
         controller.signupForm(null, model);
@@ -511,7 +511,7 @@ class CalendarControllerTest {
         LocalDate sameDay = LocalDate.of(2026, 11, 14);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
         EventSignupStore store = new EventSignupStore();
-        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(16, 59)));
+        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(17, 59)));
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
 
         String view = controller.signUp("1.234.567-2", "Juan Perez", sameDay, "propio", redirectAttributes);
@@ -526,7 +526,7 @@ class CalendarControllerTest {
         LocalDate sameDay = LocalDate.of(2026, 11, 14);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", sameDay)));
         EventSignupStore store = new EventSignupStore();
-        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(17, 0)));
+        CalendarController controller = controllerWithStore(store, fixedClockAt(sameDay, LocalTime.of(18, 0)));
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
 
         controller.signUp("1.234.567-2", "Juan Perez", sameDay, "propio", redirectAttributes);
