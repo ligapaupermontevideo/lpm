@@ -758,6 +758,39 @@ main {
     transform: translateY(-2px);
 }
 
+/* Standings pages (clasificacion-iframe.html, clasificacion.html) */
+.clasificacion-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.clasificacion-iframe-wrap {
+    width: 100%;
+    height: 80vh;
+    min-height: 480px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.clasificacion-iframe-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.clasificacion-fallback {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.clasificacion-fallback a {
+    color: var(--color-accent-strong);
+}
+
 /* Mana symbols: fixed, card-accurate colors per pip (not currentColor —
    unlike the UI icons above, these always render the same regardless of
    theme, the same way they do on an actual card). */
@@ -1495,5 +1528,10 @@ footer {
     .deck-card {
         padding: 0.7rem 0.75rem;
         gap: 0.4rem;
+    }
+
+    .clasificacion-iframe-wrap {
+        height: 70vh;
+        min-height: 400px;
     }
 }

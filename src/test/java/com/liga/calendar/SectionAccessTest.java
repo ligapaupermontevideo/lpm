@@ -26,7 +26,8 @@ class SectionAccessTest {
 
         assertThat(access.enabledSections())
                 .extracting(Section::url)
-                .containsExactly("/calendario", "/merchandising", "/colaboradores", "/mazos");
+                .containsExactly("/calendario", "/merchandising", "/colaboradores", "/mazos",
+                        "/clasificacion-iframe");
     }
 
     @Test

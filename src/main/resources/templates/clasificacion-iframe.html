@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon-32x32.png}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+    <title th:text="|Liga Pauper Montevideo - ${section.name}|">Liga Pauper Montevideo</title>
+    <link rel="preload" th:href="@{/fonts/Beleren2016-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" th:href="@{/fonts/Beleren2016SmallCaps-Bold.ttf}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: header(${section.name})}"></header>
+
+<main>
+    <section class="clasificacion-section">
+        <div class="clasificacion-iframe-wrap">
+            <iframe th:src="${standingsUrl}" title="Clasificación de la liga"></iframe>
+        </div>
+
+        <p class="clasificacion-fallback">
+            &iquest;No carga?
+            <a th:href="${standingsUrl}" target="_blank" rel="noopener">Abrila en otra pesta&ntilde;a</a>
+        </p>
+
+        <a class="back-home" th:href="@{/}">&larr; Volver al inicio</a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
