@@ -71,6 +71,22 @@ class EventSignupStoreTest {
     }
 
     @Test
+    void isSignedUpIsFalseWithNoMatchingSignup() {
+        store.signUp(signup("12345672", date));
+
+        assertThat(store.isSignedUp("12345672", otherDate)).isFalse();
+        assertThat(store.isSignedUp("41234563", date)).isFalse();
+    }
+
+    @Test
+    void isSignedUpIsTrueForAMatchingPersonAndDateWithoutRecordingAnything() {
+        store.signUp(signup("12345672", date));
+
+        assertThat(store.isSignedUp("12345672", date)).isTrue();
+        assertThat(store.all()).hasSize(1);
+    }
+
+    @Test
     void withoutADataDirNothingIsWrittenToDisk(@TempDir Path tempDir) {
         store.signUp(signup("12345672", date));
 

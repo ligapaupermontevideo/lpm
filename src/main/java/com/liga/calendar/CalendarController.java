@@ -125,19 +125,26 @@ public class CalendarController {
         }
 
         String normalizedCedula = CedulaValidator.normalize(cedula);
-        EventSignup signup = new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock));
 
+        // The deck question is answered right on the signup form itself (two
+        // submit buttons) since nombre/cedula/fecha are already at hand — no
+        // need for a separate page just to ask it. Reserving isn't final
+        // yet though: the sign-up itself is only recorded once that path
+        // actually completes (see reserveDeck below), so picking "reservar"
+        // and never finishing it never counts as attending.
+        if ("reservar".equals(deckChoice)) {
+            if (signupStore.isSignedUp(normalizedCedula, fecha)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
+                return redirectToSignupForm(fecha);
+            }
+            return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
+        }
+
+        EventSignup signup = new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock));
         EventSignupStore.SignUpResult result = signupStore.signUp(signup);
         if (result == EventSignupStore.SignUpResult.ALREADY_SIGNED_UP) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
             return redirectToSignupForm(fecha);
-        }
-
-        // The deck question is answered right on the signup form itself (two
-        // submit buttons) since nombre/cedula/fecha are already at hand —
-        // no need for a separate page just to ask it.
-        if ("reservar".equals(deckChoice)) {
-            return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
         }
 
         redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
@@ -192,13 +199,18 @@ public class CalendarController {
             return redirectToSignupForm(fecha);
         }
 
+        String normalizedCedula = CedulaValidator.normalize(cedula);
+        if (signupStore.isSignedUp(normalizedCedula, fecha)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
+            return redirectToSignupForm(fecha);
+        }
+
         Deck deck = DeckCatalog.ALL.stream().filter(d -> d.id().equals(deckId)).findFirst().orElse(null);
         if (deck == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya no esta disponible.");
-            return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+            return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
         }
 
-        String normalizedCedula = CedulaValidator.normalize(cedula);
         DeckReservation reservation = new DeckReservation(
                 normalizedCedula, fullName, deck.id(), deck.name(), fecha, LocalDateTime.now(clock));
 
@@ -206,13 +218,16 @@ public class CalendarController {
         switch (result) {
             case PERSON_ALREADY_RESERVED -> {
                 redirectAttributes.addFlashAttribute("errorMessage", "Ya tenes una reserva para esa fecha.");
-                return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+                return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
             }
             case DECK_ALREADY_TAKEN -> {
                 redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya fue reservado para esa fecha. Elegi otro.");
-                return redirectToDeckList(fullName, cedula, fecha, redirectAttributes);
+                return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
             }
             case OK -> {
+                // The sign-up itself is only recorded now, once the deck is
+                // actually secured — see signUp() above for why.
+                signupStore.signUp(new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock)));
                 redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
                 redirectAttributes.addFlashAttribute("confirmedDeck", deck.name());
                 redirectAttributes.addFlashAttribute("whatsappUrl",
