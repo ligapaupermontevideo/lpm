@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -57,10 +58,7 @@ public class EventSignupStore {
     /** One sign-up per person per date. */
     public SignUpResult signUp(EventSignup signup) {
         synchronized (lock) {
-            boolean alreadySignedUp = signups.stream()
-                    .anyMatch(existing -> existing.date().equals(signup.date())
-                            && existing.cedula().equals(signup.cedula()));
-            if (alreadySignedUp) {
+            if (isSignedUp(signup.cedula(), signup.date())) {
                 return SignUpResult.ALREADY_SIGNED_UP;
             }
             signups.add(signup);
@@ -69,6 +67,16 @@ public class EventSignupStore {
             }
             return SignUpResult.OK;
         }
+    }
+
+    /**
+     * Read-only check for whether this person is already signed up for this
+     * date, without recording anything — lets a caller validate before
+     * committing to a longer flow (e.g. picking a deck to reserve) without
+     * a throwaway write.
+     */
+    public boolean isSignedUp(String cedula, LocalDate date) {
+        return signups.stream().anyMatch(existing -> existing.date().equals(date) && existing.cedula().equals(cedula));
     }
 
     public List<EventSignup> all() {

@@ -449,7 +449,7 @@ class CalendarControllerTest {
     }
 
     @Test
-    void signUpWithReservarChoiceRedirectsToTheDeckListCarryingSignupDataForward() {
+    void signUpWithReservarChoiceRedirectsToTheDeckListWithoutSigningUpYet() {
         CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
                 LocalDateTime.of(2026, 10, 15, 19, 30),
                 LocalDateTime.of(2026, 10, 15, 23, 30), false);
@@ -462,11 +462,30 @@ class CalendarControllerTest {
         String view = controller.signUp("1.234.567-2", "Juan Perez", fecha, "reservar", redirectAttributes);
 
         assertThat(view).isEqualTo("redirect:/calendario/anotarse/deck/reservar?fecha=" + fecha);
-        assertThat(store.all()).hasSize(1);
-        assertThat(store.all().get(0).cedula()).isEqualTo("12345672");
+        // Choosing "reservar" doesn't count as attending yet — only
+        // finishing the deck pick (reserveDeck) does.
+        assertThat(store.all()).isEmpty();
         assertThat(redirectAttributes.getFlashAttributes().get("signupNombre")).isEqualTo("Juan Perez");
         assertThat(redirectAttributes.getFlashAttributes().get("signupCedula")).isEqualTo("12345672");
         assertThat(redirectAttributes.getFlashAttributes()).doesNotContainKey("errorMessage");
+    }
+
+    @Test
+    void signUpRejectsReservarChoiceWhenAlreadySignedUp() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
+                LocalDateTime.of(2026, 10, 15, 19, 30),
+                LocalDateTime.of(2026, 10, 15, 23, 30), false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(event));
+        EventSignupStore store = new EventSignupStore();
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        store.signUp(new EventSignup("12345672", "Juan Perez", fecha, "Fecha Oficial", LocalDateTime.now()));
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 10, 1)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.signUp("1.234.567-2", "Juan Perez", fecha, "reservar", redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isEqualTo("Ya estas anotado para esa fecha.");
     }
 
     @Test
@@ -651,8 +670,9 @@ class CalendarControllerTest {
     void reserveDeckCreatesReservationAndRedirectsWithCombinedConfirmation() {
         LocalDate fecha = LocalDate.of(2026, 10, 15);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", fecha)));
+        EventSignupStore signupStore = new EventSignupStore();
         DeckReservationStore reservationStore = new DeckReservationStore();
-        CalendarController controller = controllerWithStores(new EventSignupStore(), reservationStore,
+        CalendarController controller = controllerWithStores(signupStore, reservationStore,
                 fixedClockAt(LocalDate.of(2026, 10, 1)));
         Deck deck = DeckCatalog.ALL.get(0);
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
@@ -662,11 +682,52 @@ class CalendarControllerTest {
         assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
         assertThat(reservationStore.all()).hasSize(1);
         assertThat(reservationStore.all().get(0).cedula()).isEqualTo("12345672");
+        // Completing the reservation is what actually signs them up.
+        assertThat(signupStore.all()).hasSize(1);
+        assertThat(signupStore.all().get(0).cedula()).isEqualTo("12345672");
         assertThat(redirectAttributes.getFlashAttributes().get("confirmedDate")).isNotNull();
         assertThat(redirectAttributes.getFlashAttributes().get("confirmedDeck")).isEqualTo(deck.name());
         assertThat((String) redirectAttributes.getFlashAttributes().get("whatsappUrl"))
                 .startsWith("https://wa.me/59800000000?text=")
                 .contains("Fecha+Oficial");
+    }
+
+    @Test
+    void reserveDeckDoesNotSignUpWhenTheDeckIsAlreadyTaken() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", fecha)));
+        EventSignupStore signupStore = new EventSignupStore();
+        DeckReservationStore reservationStore = new DeckReservationStore();
+        Deck deck = DeckCatalog.ALL.get(0);
+        reservationStore.reserve(new DeckReservation("41234563", "Otra Persona", deck.id(), deck.name(), fecha, LocalDateTime.now()));
+        CalendarController controller = controllerWithStores(signupStore, reservationStore,
+                fixedClockAt(LocalDate.of(2026, 10, 1)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.reserveDeck("Juan Perez", "1.234.567-2", fecha, deck.id(), redirectAttributes);
+
+        // A failed attempt (deck taken) leaves them free to try again —
+        // they must not already count as signed up.
+        assertThat(signupStore.all()).isEmpty();
+    }
+
+    @Test
+    void reserveDeckRejectsWhenAlreadySignedUpWithoutAReservation() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", fecha)));
+        EventSignupStore signupStore = new EventSignupStore();
+        signupStore.signUp(new EventSignup("12345672", "Juan Perez", fecha, "Fecha Oficial", LocalDateTime.now()));
+        DeckReservationStore reservationStore = new DeckReservationStore();
+        CalendarController controller = controllerWithStores(signupStore, reservationStore,
+                fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Deck deck = DeckCatalog.ALL.get(0);
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.reserveDeck("Juan Perez", "1.234.567-2", fecha, deck.id(), redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isEqualTo("Ya estas anotado para esa fecha.");
+        assertThat(reservationStore.all()).isEmpty();
     }
 
     @Test
@@ -716,7 +777,7 @@ class CalendarControllerTest {
         assertThat(view).isEqualTo("redirect:/calendario/anotarse/deck/reservar?fecha=" + fecha);
         assertThat(redirectAttributes.getFlashAttributes().get("errorMessage")).isNotNull();
         assertThat(redirectAttributes.getFlashAttributes().get("signupNombre")).isEqualTo("Juan Perez");
-        assertThat(redirectAttributes.getFlashAttributes().get("signupCedula")).isEqualTo("1.234.567-2");
+        assertThat(redirectAttributes.getFlashAttributes().get("signupCedula")).isEqualTo("12345672");
     }
 
     @Test
