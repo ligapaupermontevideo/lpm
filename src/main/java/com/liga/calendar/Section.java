@@ -24,6 +24,6 @@ public record Section(String name, String description, String url, String icon) 
             new Section("Merchandising", "Remeras, stickers y otros productos de la liga", "/merchandising", "shirt"),
             new Section("Colaboradores", "La gente detrás de la liga", "/colaboradores", "users"),
             new Section("Mazos", "Los decks de la liga disponibles para reservar", "/mazos", "cards"),
-            new Section("Clasificación", "La tabla de posiciones de la liga, en vivo", "/clasificacion-iframe", "trophy")
+            new Section("Clasificación", "La tabla de posiciones de la liga, en vivo", "/clasificacion", "trophy")
     );
 }

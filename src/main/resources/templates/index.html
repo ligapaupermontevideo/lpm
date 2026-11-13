@@ -60,7 +60,7 @@
                             <div th:each="event : ${day.events}" class="tooltip-event"
                                  th:style="|border-left-color: ${event.colorHex};|">
                                 <p class="tooltip-title">
-                                    <span th:text="${event.title}">Evento</span>
+                                    <span th:text="${event.displayTitle}">Evento</span>
                                     <span th:if="${event.multiDay}" class="tooltip-badge">Varios d&iacute;as</span>
                                 </p>
 
@@ -119,7 +119,7 @@
                             <div th:each="event : ${day.events}" class="agenda-event">
                                 <span class="agenda-event-dot" th:style="|background: ${event.colorHex};|"></span>
                                 <div class="agenda-event-info">
-                                    <p class="agenda-event-title" th:text="${event.title}">Evento</p>
+                                    <p class="agenda-event-title" th:text="${event.displayTitle}">Evento</p>
 
                                     <p class="agenda-event-meta" th:if="${event.allDay and !event.multiDay}">
                                         <span th:replace="~{fragments/icons :: icon('clock')}"></span>

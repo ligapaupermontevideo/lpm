@@ -6,23 +6,23 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class ClasificacionIframeController {
+public class ClasificacionController {
 
     private final SectionAccess sectionAccess;
     private final String standingsUrl;
 
-    public ClasificacionIframeController(SectionAccess sectionAccess,
-                                          @Value("${liga.clasificacion.url}") String standingsUrl) {
+    public ClasificacionController(SectionAccess sectionAccess,
+                                    @Value("${liga.clasificacion.url}") String standingsUrl) {
         this.sectionAccess = sectionAccess;
         this.standingsUrl = standingsUrl;
     }
 
-    @GetMapping("/clasificacion-iframe")
-    public String clasificacionIframe(Model model) {
-        Section section = sectionAccess.requireEnabled("/clasificacion-iframe");
+    @GetMapping("/clasificacion")
+    public String clasificacion(Model model) {
+        Section section = sectionAccess.requireEnabled("/clasificacion");
 
         model.addAttribute("section", section);
         model.addAttribute("standingsUrl", standingsUrl);
-        return "clasificacion-iframe";
+        return "clasificacion";
     }
 }
