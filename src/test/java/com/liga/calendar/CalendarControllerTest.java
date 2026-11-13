@@ -228,6 +228,42 @@ class CalendarControllerTest {
     }
 
     @Test
+    void signupUrlsIncludeAPinnedDateEvenOutsideTheNearestWeek() {
+        // Same setup as signupUrlsOnlyIncludeTheNearestRegistrableWeek, but
+        // the "later" date now carries the [Especial] marker, so it should show
+        // up alongside the nearest week instead of being filtered out.
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        LocalDate nextWeekDate = LocalDate.of(2026, 11, 11);
+        LocalDate pinnedDate = LocalDate.of(2026, 11, 20);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", thisWeekDate), officialDate("2", nextWeekDate), pinnedDate("3", pinnedDate)));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 11, 2)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 11, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls.keySet()).containsExactlyInAnyOrder(thisWeekDate, pinnedDate);
+    }
+
+    @Test
+    void signUpSucceedsForAPinnedDateOutsideTheNearestWeek() {
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        LocalDate pinnedDate = LocalDate.of(2026, 11, 20);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(
+                officialDate("1", thisWeekDate), pinnedDate("2", pinnedDate)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 11, 2)));
+        var redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("12345672", "Juan Perez", pinnedDate, "propio", redirectAttributes);
+
+        assertThat(store.all()).hasSize(1);
+        assertThat(store.all().get(0).eventTitle()).isEqualTo("Torneo Especial");
+    }
+
+    @Test
     void indexFlagsTheMonthAsHavingEventsOnlyWhenAnInMonthDayHasOne() {
         CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null,
                 LocalDateTime.of(2026, 10, 15, 19, 0),
@@ -847,6 +883,11 @@ class CalendarControllerTest {
 
     private CalendarEvent officialDate(String id, LocalDate date) {
         return new CalendarEvent(id, "Fecha Oficial", null, null,
+                date.atTime(19, 0), date.atTime(23, 0), false);
+    }
+
+    private CalendarEvent pinnedDate(String id, LocalDate date) {
+        return new CalendarEvent(id, "Torneo Especial [Especial]", null, null,
                 date.atTime(19, 0), date.atTime(23, 0), false);
     }
 

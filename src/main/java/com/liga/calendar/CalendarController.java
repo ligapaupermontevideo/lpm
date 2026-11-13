@@ -140,7 +140,7 @@ public class CalendarController {
             return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
         }
 
-        EventSignup signup = new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock));
+        EventSignup signup = new EventSignup(normalizedCedula, fullName, fecha, event.getDisplayTitle(), LocalDateTime.now(clock));
         EventSignupStore.SignUpResult result = signupStore.signUp(signup);
         if (result == EventSignupStore.SignUpResult.ALREADY_SIGNED_UP) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
@@ -227,7 +227,7 @@ public class CalendarController {
             case OK -> {
                 // The sign-up itself is only recorded now, once the deck is
                 // actually secured — see signUp() above for why.
-                signupStore.signUp(new EventSignup(normalizedCedula, fullName, fecha, event.getTitle(), LocalDateTime.now(clock)));
+                signupStore.signUp(new EventSignup(normalizedCedula, fullName, fecha, event.getDisplayTitle(), LocalDateTime.now(clock)));
                 redirectAttributes.addFlashAttribute("confirmedDate", toDateOption(fecha).label());
                 redirectAttributes.addFlashAttribute("confirmedDeck", deck.name());
                 redirectAttributes.addFlashAttribute("whatsappUrl",
@@ -313,7 +313,9 @@ public class CalendarController {
     // current one has passed or hit the same-day cutoff. Only single-day
     // events count as "fechas oficiales" people can sign up for —
     // multi-day events (like the season-long "Temporada ..." entry) are
-    // purely informational.
+    // purely informational. The one exception is a "pinned" event (see
+    // CalendarEvent#isPinned) — those stay registrable no matter which
+    // week it is.
     private Map<LocalDate, CalendarEvent> registrableEventsByDate() {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDate today = now.toLocalDate();
@@ -330,12 +332,20 @@ public class CalendarController {
             return byDate;
         }
 
-        LocalDate nearest = byDate.keySet().iterator().next();
+        Map<LocalDate, CalendarEvent> pinned = new LinkedHashMap<>();
+        Map<LocalDate, CalendarEvent> rest = new LinkedHashMap<>();
+        byDate.forEach((date, event) -> (event.isPinned() ? pinned : rest).put(date, event));
+
+        if (rest.isEmpty()) {
+            return pinned;
+        }
+
+        LocalDate nearest = rest.keySet().iterator().next();
         LocalDate weekStart = nearest.minusDays(nearest.getDayOfWeek().getValue() - 1);
         LocalDate weekEnd = weekStart.plusDays(6);
 
-        Map<LocalDate, CalendarEvent> result = new LinkedHashMap<>();
-        byDate.forEach((date, event) -> {
+        Map<LocalDate, CalendarEvent> result = new LinkedHashMap<>(pinned);
+        rest.forEach((date, event) -> {
             if (!date.isBefore(weekStart) && !date.isAfter(weekEnd)) {
                 result.put(date, event);
             }
@@ -375,7 +385,7 @@ public class CalendarController {
                 - Cedula: %s
                 - Fecha: %s (%s)
                 %s"""
-                .formatted(fullName, cedula, event.getStartDate().format(WHATSAPP_DATE), event.getTitle(), deckLine);
+                .formatted(fullName, cedula, event.getStartDate().format(WHATSAPP_DATE), event.getDisplayTitle(), deckLine);
 
         String encoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
         return "https://wa.me/" + whatsappNumber + "?text=" + encoded;

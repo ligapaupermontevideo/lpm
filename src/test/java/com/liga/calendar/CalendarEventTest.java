@@ -113,6 +113,48 @@ class CalendarEventTest {
     }
 
     @Test
+    void isPinnedIsFalseWithoutTheMarker() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null, null, null, false);
+
+        assertThat(event.isPinned()).isFalse();
+    }
+
+    @Test
+    void isPinnedIsTrueWithTheMarkerAnywhereInTheTitle() {
+        CalendarEvent event = new CalendarEvent("1", "Torneo Especial [Especial]", null, null, null, null, false);
+
+        assertThat(event.isPinned()).isTrue();
+    }
+
+    @Test
+    void isPinnedIsCaseInsensitive() {
+        CalendarEvent event = new CalendarEvent("1", "[especial] Torneo Especial", null, null, null, null, false);
+
+        assertThat(event.isPinned()).isTrue();
+    }
+
+    @Test
+    void getDisplayTitleStripsTheMarkerAndExtraWhitespace() {
+        CalendarEvent event = new CalendarEvent("1", "Torneo Especial [Especial]", null, null, null, null, false);
+
+        assertThat(event.getDisplayTitle()).isEqualTo("Torneo Especial");
+    }
+
+    @Test
+    void getDisplayTitleStripsAMarkerInTheMiddleOfTheTitle() {
+        CalendarEvent event = new CalendarEvent("1", "Torneo [Especial] Especial", null, null, null, null, false);
+
+        assertThat(event.getDisplayTitle()).isEqualTo("Torneo Especial");
+    }
+
+    @Test
+    void getDisplayTitleReturnsTheTitleUnchangedWithoutTheMarker() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null, null, null, false);
+
+        assertThat(event.getDisplayTitle()).isEqualTo("Fecha Oficial");
+    }
+
+    @Test
     void gettersReturnConstructorValues() {
         LocalDateTime start = LocalDateTime.of(2026, 10, 8, 19, 30);
         LocalDateTime end = LocalDateTime.of(2026, 10, 8, 23, 30);

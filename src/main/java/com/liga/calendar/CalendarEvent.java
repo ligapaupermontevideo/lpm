@@ -4,8 +4,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class CalendarEvent {
+
+    // A league organizer can put this marker anywhere in an event's title,
+    // directly in Google Calendar, to make that date always open for
+    // sign-up instead of only during its own nearest Monday-Sunday week
+    // (see CalendarController#registrableEventsByDate). It's stripped from
+    // the title wherever it's shown — see getDisplayTitle().
+    private static final Pattern PINNED_MARKER = Pattern.compile("\\[especial\\]", Pattern.CASE_INSENSITIVE);
 
     // Google Calendar's fixed per-event color palette (colorId 1-11), so the
     // hover tooltip reuses the exact colors the event has in Google Calendar
@@ -54,6 +62,17 @@ public class CalendarEvent {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    /** Whether this event carries the always-open-for-sign-up marker. */
+    public boolean isPinned() {
+        return title != null && PINNED_MARKER.matcher(title).find();
+    }
+
+    /** The title with the pinned marker (if any) stripped out, for display. */
+    public String getDisplayTitle() {
+        if (title == null) return null;
+        return PINNED_MARKER.matcher(title).replaceAll("").trim().replaceAll("\\s{2,}", " ");
+    }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
