@@ -44,6 +44,14 @@ public class CalendarEvent {
     private boolean allDay;
     private String colorId;
 
+    // True for an event from the main league calendar (google.calendar.id),
+    // false for one from an additional calendar (see CalendarProperties).
+    // Those extra calendars are informational only — see
+    // CalendarController#registrableEventsByDate — so defaulting to true
+    // keeps every existing caller (including tests that never touch this
+    // field) behaving as a signup-eligible, primary-calendar event.
+    private boolean fromPrimaryCalendar = true;
+
     public CalendarEvent() {}
 
     public CalendarEvent(String id, String title, String description, String location,
@@ -91,6 +99,9 @@ public class CalendarEvent {
 
     public String getColorId() { return colorId; }
     public void setColorId(String colorId) { this.colorId = colorId; }
+
+    public boolean isFromPrimaryCalendar() { return fromPrimaryCalendar; }
+    public void setFromPrimaryCalendar(boolean fromPrimaryCalendar) { this.fromPrimaryCalendar = fromPrimaryCalendar; }
 
     /** The event's color as it appears in Google Calendar, or the site's accent color if none was set. */
     public String getColorHex() {

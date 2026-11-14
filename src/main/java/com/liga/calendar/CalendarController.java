@@ -310,10 +310,13 @@ public class CalendarController {
     // DeckReservationController#availableDates): only the nearest
     // Monday-Sunday week that still has a registrable date in it, so this
     // naturally rolls over to the following week once every date in the
-    // current one has passed or hit the same-day cutoff. Only single-day
-    // events count as "fechas oficiales" people can sign up for —
-    // multi-day events (like the season-long "Temporada ..." entry) are
-    // purely informational. The one exception is a "pinned" event (see
+    // current one has passed or hit the same-day cutoff — this keeps the
+    // list from overwhelming people with every date on the calendar at
+    // once. Only single-day events from the main league calendar count as
+    // "fechas oficiales" people can sign up for — multi-day events (like
+    // the season-long "Temporada ..." entry) and anything from an extra
+    // calendar (see CalendarEvent#isFromPrimaryCalendar/CalendarProperties)
+    // are purely informational. The one exception is a "pinned" event (see
     // CalendarEvent#isPinned) — those stay registrable no matter which
     // week it is.
     private Map<LocalDate, CalendarEvent> registrableEventsByDate() {
@@ -323,6 +326,7 @@ public class CalendarController {
 
         Map<LocalDate, CalendarEvent> byDate = new LinkedHashMap<>();
         calendarService.getEvents(today, horizon).stream()
+                .filter(CalendarEvent::isFromPrimaryCalendar)
                 .filter(event -> !event.isMultiDay())
                 .filter(event -> event.getStartDate() != null && isRegistrable(event.getStartDate(), now))
                 .sorted(Comparator.comparing(CalendarEvent::getStartDate))
