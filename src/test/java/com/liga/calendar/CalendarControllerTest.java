@@ -248,6 +248,24 @@ class CalendarControllerTest {
     }
 
     @Test
+    void signupUrlsExcludeASingleDayEventFromAnExtraCalendar() {
+        // An event from an extra calendar (e.g. "Eventos Pauper") is purely
+        // informational, even if it's single-day and upcoming.
+        LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
+        CalendarEvent extraCalendarEvent = officialDate("1", thisWeekDate);
+        extraCalendarEvent.setFromPrimaryCalendar(false);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(extraCalendarEvent));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 11, 2)));
+        Model model = new ConcurrentModel();
+
+        controller.index(2026, 11, model);
+
+        @SuppressWarnings("unchecked")
+        Map<LocalDate, String> signupUrls = (Map<LocalDate, String>) model.getAttribute("signupUrls");
+        assertThat(signupUrls).isEmpty();
+    }
+
+    @Test
     void signUpSucceedsForAPinnedDateOutsideTheNearestWeek() {
         LocalDate thisWeekDate = LocalDate.of(2026, 11, 4);
         LocalDate pinnedDate = LocalDate.of(2026, 11, 20);

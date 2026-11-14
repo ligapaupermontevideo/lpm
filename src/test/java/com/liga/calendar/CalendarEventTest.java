@@ -113,6 +113,21 @@ class CalendarEventTest {
     }
 
     @Test
+    void fromPrimaryCalendarDefaultsToTrue() {
+        CalendarEvent event = new CalendarEvent("1", "Evento", null, null, null, null, false);
+
+        assertThat(event.isFromPrimaryCalendar()).isTrue();
+    }
+
+    @Test
+    void fromPrimaryCalendarCanBeSetToFalse() {
+        CalendarEvent event = new CalendarEvent("1", "Evento", null, null, null, null, false);
+        event.setFromPrimaryCalendar(false);
+
+        assertThat(event.isFromPrimaryCalendar()).isFalse();
+    }
+
+    @Test
     void isPinnedIsFalseWithoutTheMarker() {
         CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null, null, null, false);
 

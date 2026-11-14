@@ -6,6 +6,8 @@ import com.google.api.services.calendar.model.EventDateTime;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,5 +81,18 @@ class GoogleCalendarServiceTest {
         LocalDateTime roundTripped = service.toLocalDateTime(googleDateTime);
 
         assertThat(roundTripped).isEqualTo(original);
+    }
+
+    @Test
+    void activeExtraCalendarIdsSkipsBlankAndUnsetEntries() {
+        Map<String, String> extra = new LinkedHashMap<>();
+        extra.put("eventos-pauper", "eventos-pauper@group.calendar.google.com");
+        extra.put("not-configured-yet", "");
+        extra.put("also-blank", "   ");
+        CalendarProperties properties = new CalendarProperties();
+        properties.setExtra(extra);
+        service.calendarProperties = properties;
+
+        assertThat(service.activeExtraCalendarIds()).containsExactly("eventos-pauper@group.calendar.google.com");
     }
 }
