@@ -853,6 +853,56 @@ main {
     color: var(--color-accent-strong);
 }
 
+/* Donations page (donaciones.html) */
+.donaciones-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.donaciones-intro {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+}
+
+.donation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.donation-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem 1rem;
+    color: var(--color-accent-strong);
+    text-decoration: none;
+    font-family: var(--font-display-caps);
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.donation-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+.donation-card .icon {
+    font-size: 1.8rem;
+    color: var(--color-accent);
+}
+
+.donation-amount {
+    font-size: 1rem;
+}
+
 /* Placeholder page for sections without a real page yet */
 .placeholder-section {
     display: flex;

@@ -170,6 +170,41 @@ class CalendarEventTest {
     }
 
     @Test
+    void isNoDecksIsFalseWithoutTheMarker() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial", null, null, null, null, false);
+
+        assertThat(event.isNoDecks()).isFalse();
+    }
+
+    @Test
+    void isNoDecksIsTrueWithTheMarkerAnywhereInTheTitle() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial [NoDecks]", null, null, null, null, false);
+
+        assertThat(event.isNoDecks()).isTrue();
+    }
+
+    @Test
+    void isNoDecksIsCaseInsensitive() {
+        CalendarEvent event = new CalendarEvent("1", "[nodecks] Fecha Oficial", null, null, null, null, false);
+
+        assertThat(event.isNoDecks()).isTrue();
+    }
+
+    @Test
+    void getDisplayTitleStripsTheNoDecksMarker() {
+        CalendarEvent event = new CalendarEvent("1", "Fecha Oficial [NoDecks]", null, null, null, null, false);
+
+        assertThat(event.getDisplayTitle()).isEqualTo("Fecha Oficial");
+    }
+
+    @Test
+    void getDisplayTitleStripsBothMarkersWhenPresent() {
+        CalendarEvent event = new CalendarEvent("1", "Torneo Especial [Especial] [NoDecks]", null, null, null, null, false);
+
+        assertThat(event.getDisplayTitle()).isEqualTo("Torneo Especial");
+    }
+
+    @Test
     void gettersReturnConstructorValues() {
         LocalDateTime start = LocalDateTime.of(2026, 10, 8, 19, 30);
         LocalDateTime end = LocalDateTime.of(2026, 10, 8, 23, 30);
