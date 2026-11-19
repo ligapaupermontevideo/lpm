@@ -15,6 +15,13 @@ public class CalendarEvent {
     // the title wherever it's shown — see getDisplayTitle().
     private static final Pattern PINNED_MARKER = Pattern.compile("\\[especial\\]", Pattern.CASE_INSENSITIVE);
 
+    // Same idea as PINNED_MARKER, but for blocking league-deck reservations
+    // for this date instead — e.g. a format where everyone has to bring
+    // their own deck. People can still sign up, just not pick "reservar un
+    // deck" (see CalendarController#signUp/deckList/reserveDeck). Also
+    // stripped from the title wherever it's shown — see getDisplayTitle().
+    private static final Pattern NO_DECKS_MARKER = Pattern.compile("\\[nodecks\\]", Pattern.CASE_INSENSITIVE);
+
     // Google Calendar's fixed per-event color palette (colorId 1-11), so the
     // hover tooltip reuses the exact colors the event has in Google Calendar
     // itself. Events without a colorId use the calendar's own default color,
@@ -76,10 +83,17 @@ public class CalendarEvent {
         return title != null && PINNED_MARKER.matcher(title).find();
     }
 
-    /** The title with the pinned marker (if any) stripped out, for display. */
+    /** Whether league decks can't be reserved for this date — see NO_DECKS_MARKER. */
+    public boolean isNoDecks() {
+        return title != null && NO_DECKS_MARKER.matcher(title).find();
+    }
+
+    /** The title with the pinned/no-decks markers (if any) stripped out, for display. */
     public String getDisplayTitle() {
         if (title == null) return null;
-        return PINNED_MARKER.matcher(title).replaceAll("").trim().replaceAll("\\s{2,}", " ");
+        String stripped = PINNED_MARKER.matcher(title).replaceAll("");
+        stripped = NO_DECKS_MARKER.matcher(stripped).replaceAll("");
+        return stripped.trim().replaceAll("\\s{2,}", " ");
     }
 
     public String getDescription() { return description; }

@@ -133,6 +133,11 @@ public class CalendarController {
         // actually completes (see reserveDeck below), so picking "reservar"
         // and never finishing it never counts as attending.
         if ("reservar".equals(deckChoice)) {
+            if (event.isNoDecks()) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Para esta fecha no se pueden reservar decks de la liga, tenes que llevar el tuyo.");
+                return redirectToSignupForm(fecha);
+            }
             if (signupStore.isSignedUp(normalizedCedula, fecha)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Ya estas anotado para esa fecha.");
                 return redirectToSignupForm(fecha);
@@ -164,7 +169,8 @@ public class CalendarController {
             return redirectToSignupForm(fecha);
         }
 
-        if (registrableEventsByDate().get(fecha) == null) {
+        CalendarEvent event = registrableEventsByDate().get(fecha);
+        if (event == null || event.isNoDecks()) {
             return redirectToSignupForm(fecha);
         }
 
@@ -196,6 +202,12 @@ public class CalendarController {
         CalendarEvent event = registrableEventsByDate().get(fecha);
         if (event == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Esa fecha ya no esta disponible.");
+            return redirectToSignupForm(fecha);
+        }
+
+        if (event.isNoDecks()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Para esta fecha no se pueden reservar decks de la liga, tenes que llevar el tuyo.");
             return redirectToSignupForm(fecha);
         }
 

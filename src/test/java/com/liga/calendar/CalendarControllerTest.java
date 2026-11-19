@@ -543,6 +543,36 @@ class CalendarControllerTest {
     }
 
     @Test
+    void signUpWithReservarChoiceIsRejectedForANoDecksDate() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(noDecksDate("1", fecha)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 10, 1)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.signUp("1.234.567-2", "Juan Perez", fecha, "reservar", redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage"))
+                .isEqualTo("Para esta fecha no se pueden reservar decks de la liga, tenes que llevar el tuyo.");
+        assertThat(store.all()).isEmpty();
+    }
+
+    @Test
+    void signUpWithOwnDeckChoiceStillWorksForANoDecksDate() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(noDecksDate("1", fecha)));
+        EventSignupStore store = new EventSignupStore();
+        CalendarController controller = controllerWithStore(store, fixedClockAt(LocalDate.of(2026, 10, 1)));
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        controller.signUp("1.234.567-2", "Juan Perez", fecha, "propio", redirectAttributes);
+
+        assertThat(store.all()).hasSize(1);
+        assertThat(redirectAttributes.getFlashAttributes()).doesNotContainKey("errorMessage");
+    }
+
+    @Test
     void signUpRejectsBlankName() {
         EventSignupStore store = new EventSignupStore();
         CalendarController controller = controllerWithStore(store, Clock.systemDefaultZone());
@@ -701,6 +731,20 @@ class CalendarControllerTest {
     }
 
     @Test
+    void deckListRedirectsWhenTheDateHasTheNoDecksMarker() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(noDecksDate("1", fecha)));
+        CalendarController controller = controller(fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Model model = new ConcurrentModel();
+        model.addAttribute("signupNombre", "Juan Perez");
+        model.addAttribute("signupCedula", "12345672");
+
+        String view = controller.deckList(fecha, model);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+    }
+
+    @Test
     void deckListMarksAlreadyReservedDecksForTheDate() {
         LocalDate fecha = LocalDate.of(2026, 10, 15);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", fecha)));
@@ -820,6 +864,26 @@ class CalendarControllerTest {
     }
 
     @Test
+    void reserveDeckRejectsWhenTheDateHasTheNoDecksMarker() {
+        LocalDate fecha = LocalDate.of(2026, 10, 15);
+        when(calendarService.getEvents(any(), any())).thenReturn(List.of(noDecksDate("1", fecha)));
+        EventSignupStore signupStore = new EventSignupStore();
+        DeckReservationStore reservationStore = new DeckReservationStore();
+        CalendarController controller = controllerWithStores(signupStore, reservationStore,
+                fixedClockAt(LocalDate.of(2026, 10, 1)));
+        Deck deck = DeckCatalog.ALL.get(0);
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.reserveDeck("Juan Perez", "1.234.567-2", fecha, deck.id(), redirectAttributes);
+
+        assertThat(view).isEqualTo("redirect:/calendario/anotarse?fecha=" + fecha);
+        assertThat(redirectAttributes.getFlashAttributes().get("errorMessage"))
+                .isEqualTo("Para esta fecha no se pueden reservar decks de la liga, tenes que llevar el tuyo.");
+        assertThat(reservationStore.all()).isEmpty();
+        assertThat(signupStore.all()).isEmpty();
+    }
+
+    @Test
     void reserveDeckRejectsUnknownDeckAndReturnsToTheDeckList() {
         LocalDate fecha = LocalDate.of(2026, 10, 15);
         when(calendarService.getEvents(any(), any())).thenReturn(List.of(officialDate("1", fecha)));
@@ -906,6 +970,11 @@ class CalendarControllerTest {
 
     private CalendarEvent pinnedDate(String id, LocalDate date) {
         return new CalendarEvent(id, "Torneo Especial [Especial]", null, null,
+                date.atTime(19, 0), date.atTime(23, 0), false);
+    }
+
+    private CalendarEvent noDecksDate(String id, LocalDate date) {
+        return new CalendarEvent(id, "Fecha Oficial [NoDecks]", null, null,
                 date.atTime(19, 0), date.atTime(23, 0), false);
     }
 
