@@ -392,7 +392,7 @@ class CalendarControllerTest {
         SectionProperties properties = new SectionProperties();
         properties.setEnabled(Map.of("calendario", false));
         CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
-                "59800000000", Clock.systemDefaultZone(), new EventSignupStore(), new DeckReservationStore());
+                "59800000000", Clock.systemDefaultZone(), new EventSignupStore(), new DeckReservationStore(), stubDeckService());
         Model model = new ConcurrentModel();
 
         assertThatThrownBy(() -> controller.index(null, null, model))
@@ -472,7 +472,7 @@ class CalendarControllerTest {
         SectionProperties properties = new SectionProperties();
         properties.setEnabled(Map.of("calendario", false));
         CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
-                "59800000000", Clock.systemDefaultZone(), new EventSignupStore(), new DeckReservationStore());
+                "59800000000", Clock.systemDefaultZone(), new EventSignupStore(), new DeckReservationStore(), stubDeckService());
 
         assertThatThrownBy(() -> controller.signupForm(null, new ConcurrentModel()))
                 .isInstanceOf(ResponseStatusException.class);
@@ -678,7 +678,7 @@ class CalendarControllerTest {
         properties.setEnabled(Map.of("calendario", false));
         EventSignupStore store = new EventSignupStore();
         CalendarController controller = new CalendarController(calendarService, new SectionAccess(properties),
-                "59800000000", Clock.systemDefaultZone(), store, new DeckReservationStore());
+                "59800000000", Clock.systemDefaultZone(), store, new DeckReservationStore(), stubDeckService());
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
 
         assertThatThrownBy(() -> controller.signUp("1.234.567-2", "Juan Perez", LocalDate.of(2026, 10, 15), "propio", redirectAttributes))
@@ -950,7 +950,19 @@ class CalendarControllerTest {
 
     private CalendarController controllerWithStores(EventSignupStore signupStore, DeckReservationStore reservationStore, Clock clock) {
         return new CalendarController(calendarService, new SectionAccess(new SectionProperties()), "59800000000", clock,
-                signupStore, reservationStore);
+                signupStore, reservationStore, stubDeckService());
+    }
+
+    // A fixed, non-network-dependent stand-in for MoxfieldDeckService, so
+    // these tests keep using DeckCatalog.ALL as deterministic fixture data
+    // without actually shelling out to curl.
+    private MoxfieldDeckService stubDeckService() {
+        return new MoxfieldDeckService() {
+            @Override
+            public List<Deck> getDecks() {
+                return DeckCatalog.ALL;
+            }
+        };
     }
 
     private Clock fixedClockAt(LocalDate date) {

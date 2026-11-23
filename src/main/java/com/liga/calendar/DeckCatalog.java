@@ -3,17 +3,16 @@ package com.liga.calendar;
 import java.util.List;
 
 /**
- * The decks available to reserve as part of the "anotarse a una fecha" flow
- * (see {@link CalendarController}), mirrored from the league's public
- * profile at
+ * A hand-maintained snapshot of the league's decks, mirrored from its
+ * public Moxfield profile at
  * {@code https://moxfield.com/users/ligapaupermontevideo}.
  * <p>
- * This isn't fetched live: Moxfield's API sits behind Cloudflare, which
- * fingerprints the TLS handshake itself and blocks every plain Java HTTP
- * client (JDK HttpClient, HttpURLConnection) regardless of User-Agent —
- * even though the identical request succeeds from curl. Working around that
- * reliably would mean fighting Cloudflare's bot detection, so instead this
- * list is refreshed by hand when the league's decks change, by running:
+ * This is no longer the live source of truth for the site — see
+ * {@link MoxfieldDeckService}, which fetches decks from Moxfield directly.
+ * {@link #ALL} is kept only as the bundled fallback {@link MoxfieldDeckService}
+ * falls back to if it has never managed a successful fetch (e.g. right
+ * after a fresh deploy with no network yet). To refresh this snapshot by
+ * hand if it drifts too far from reality, run:
  * <pre>
  * curl -s \
  *   -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \

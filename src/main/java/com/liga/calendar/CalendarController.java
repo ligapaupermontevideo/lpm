@@ -42,16 +42,19 @@ public class CalendarController {
     private final Clock clock;
     private final EventSignupStore signupStore;
     private final DeckReservationStore reservationStore;
+    private final MoxfieldDeckService deckService;
 
     public CalendarController(GoogleCalendarService calendarService, SectionAccess sectionAccess,
                                @Value("${liga.whatsapp.number}") String whatsappNumber, Clock clock,
-                               EventSignupStore signupStore, DeckReservationStore reservationStore) {
+                               EventSignupStore signupStore, DeckReservationStore reservationStore,
+                               MoxfieldDeckService deckService) {
         this.calendarService = calendarService;
         this.sectionAccess = sectionAccess;
         this.whatsappNumber = whatsappNumber;
         this.clock = clock;
         this.signupStore = signupStore;
         this.reservationStore = reservationStore;
+        this.deckService = deckService;
     }
 
     @GetMapping("/calendario")
@@ -180,7 +183,7 @@ public class CalendarController {
         model.addAttribute("fechaLabel", toDateOption(fecha).label());
         model.addAttribute("nombre", nombre);
         model.addAttribute("cedula", cedula);
-        model.addAttribute("decks", DeckCatalog.ALL);
+        model.addAttribute("decks", deckService.getDecks());
         model.addAttribute("reservedDeckIds", reservedDeckIds);
         return "anotarse-deck-reservar";
     }
@@ -217,7 +220,7 @@ public class CalendarController {
             return redirectToSignupForm(fecha);
         }
 
-        Deck deck = DeckCatalog.ALL.stream().filter(d -> d.id().equals(deckId)).findFirst().orElse(null);
+        Deck deck = deckService.getDecks().stream().filter(d -> d.id().equals(deckId)).findFirst().orElse(null);
         if (deck == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ese deck ya no esta disponible.");
             return redirectToDeckList(fullName, normalizedCedula, fecha, redirectAttributes);
@@ -311,7 +314,7 @@ public class CalendarController {
     }
 
     private List<String> colorsOf(String deckId) {
-        return DeckCatalog.ALL.stream()
+        return deckService.getDecks().stream()
                 .filter(deck -> deck.id().equals(deckId))
                 .findFirst()
                 .map(Deck::colors)
