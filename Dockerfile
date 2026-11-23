@@ -15,6 +15,13 @@ RUN mvn -B -q -DskipTests package
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
+# curl isn't in this base image by default. MoxfieldDeckService shells out
+# to it (instead of using Java's own HTTP client) because Moxfield's API
+# sits behind Cloudflare, which blocks every plain Java HTTP client's TLS
+# fingerprint regardless of headers, but not curl's.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system app && useradd --system --gid app app
 COPY --from=build /build/target/app.jar ./app.jar
 RUN mkdir -p /app/data && chown app:app /app/data

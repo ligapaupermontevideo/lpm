@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class MazosController {
 
     private final SectionAccess sectionAccess;
+    private final MoxfieldDeckService deckService;
 
-    public MazosController(SectionAccess sectionAccess) {
+    public MazosController(SectionAccess sectionAccess, MoxfieldDeckService deckService) {
         this.sectionAccess = sectionAccess;
+        this.deckService = deckService;
     }
 
     @GetMapping("/mazos")
@@ -18,7 +20,7 @@ public class MazosController {
         Section section = sectionAccess.requireEnabled("/mazos");
 
         model.addAttribute("section", section);
-        model.addAttribute("decks", DeckCatalog.ALL);
+        model.addAttribute("decks", deckService.getDecks());
         return "mazos";
     }
 }
