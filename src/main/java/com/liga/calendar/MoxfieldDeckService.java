@@ -2,41 +2,52 @@ package com.liga.calendar;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Fetches the league's decks live from its public Moxfield profile, so a
- * deck that gets taken down or set private on Moxfield stops showing up on
- * the site too (see {@link MazosController} and
+ * Fetches the league's decks live from its public Moxfield profile on every
+ * call, so a deck that gets taken down or set private on Moxfield stops
+ * showing up on the site too (see {@link MazosController} and
  * {@link CalendarController}'s deck reservation flow) without anyone having
- * to remember to edit this codebase.
+ * to remember to edit this codebase. Deliberately not cached: a deck's
+ * visibility has to be checked at request time, not served from a snapshot
+ * that could be minutes (or a whole deploy) out of date and show a deck
+ * that has since been made private.
  * <p>
  * Moxfield's API sits behind Cloudflare, which fingerprints the TLS
  * handshake itself and blocks every plain Java HTTP client (JDK HttpClient,
  * Apache HttpClient, ...) regardless of headers -- even though the identical
  * request succeeds from curl. So this shells out to curl instead of using
  * Java's own HTTP stack (see the runtime Docker image, which installs curl
- * for exactly this reason). Results are cached for {@link #CACHE_TTL} so a
- * burst of page views doesn't spawn a curl process per request; if a
- * refresh fails (Moxfield down, curl missing, network issue) the last good
- * result keeps being served -- falling all the way back to
- * {@link DeckCatalog#ALL}, a hand-maintained snapshot, only if nothing has
- * ever been fetched successfully yet (e.g. right after a fresh deploy with
- * no network).
+ * for exactly this reason). That isn't enough on every host, though:
+ * Cloudflare can also block a request by the reputation of the IP it comes
+ * from, and several PaaS hosts' outbound ranges (Render among them) get
+ * blocked that way regardless of what client makes the request -- confirmed
+ * in production by curl itself failing there with exit 22 (an HTTP error
+ * status), while the identical command succeeds from a residential network.
+ * <p>
+ * So there are two ways fresh decks reach this service: this class's own
+ * live attempt (works wherever Moxfield doesn't block the host's IP, e.g.
+ * local dev), and {@link MoxfieldSyncController}, a small token-protected
+ * endpoint a scheduled GitHub Action calls from GitHub's own runners every
+ * few minutes with the same search-API response, for hosts where the direct
+ * attempt is blocked. Whichever last succeeded is kept as {@link #lastGoodDecks}
+ * and persisted to {@code liga.data.dir} so it survives a restart -- falling
+ * all the way back to {@link DeckCatalog#ALL}, a hand-maintained snapshot,
+ * only if neither has ever succeeded (e.g. right after a fresh deploy,
+ * before the GitHub Action's next scheduled run). That snapshot can itself
+ * be stale/wrong about visibility, so its continued use is the signal
+ * something is wrong with both paths and worth checking the logs for.
  */
 @Service
 public class MoxfieldDeckService {
-
-    private static final Duration CACHE_TTL = Duration.ofMinutes(15);
 
     private static final String USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
@@ -44,33 +55,53 @@ public class MoxfieldDeckService {
     @Value("${liga.moxfield.username:ligapaupermontevideo}")
     private String userName;
 
-    // Package-private so unit tests can swap in a fixed point in time
-    // without a Spring context, same reasoning as GoogleCalendarService's
-    // injected members.
-    Clock clock = Clock.systemDefaultZone();
+    // Package-private, left blank in tests and whenever liga.data.dir is
+    // unset -- same reasoning as EventSignupStore#dataDir.
+    @Value("${liga.data.dir:}")
+    String dataDir;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private volatile List<Deck> cachedDecks = null;
-    private volatile Instant cachedAt = Instant.EPOCH;
+    private JsonFileStore<Deck> fileStore;
 
-    /** The league's current public decks, freshest available within {@link #CACHE_TTL}. */
-    public List<Deck> getDecks() {
-        if (cachedDecks != null && Instant.now(clock).isBefore(cachedAt.plus(CACHE_TTL))) {
-            return cachedDecks;
+    private volatile List<Deck> lastGoodDecks = null;
+
+    @PostConstruct
+    void loadFromDisk() {
+        if (dataDir == null || dataDir.isBlank()) {
+            return;
         }
+        fileStore = new JsonFileStore<>(dataDir, "moxfield-decks.json", Deck.class);
+        List<Deck> persisted = fileStore.readAll();
+        if (!persisted.isEmpty()) {
+            lastGoodDecks = persisted;
+        }
+    }
 
+    /** The league's current public decks, fetched live from Moxfield for this call. */
+    public List<Deck> getDecks() {
         List<Deck> fresh = fetchFromMoxfield();
         if (fresh != null) {
-            cachedDecks = fresh;
-            cachedAt = Instant.now(clock);
+            rememberAsLastGood(fresh);
             return fresh;
         }
 
-        // Refresh failed: keep serving whatever we had (even if stale)
-        // rather than showing nothing, falling back to the bundled
-        // snapshot only if we've never fetched successfully at all.
-        return cachedDecks != null ? cachedDecks : DeckCatalog.ALL;
+        System.err.println("Moxfield fetch failed; serving "
+                + (lastGoodDecks != null ? "the last known-good result (own fetch or GitHub Action sync)" : "the bundled fallback snapshot")
+                + " instead");
+        return lastGoodDecks != null ? lastGoodDecks : DeckCatalog.ALL;
+    }
+
+    /** Called by {@link MoxfieldSyncController} once it's already validated the caller and parsed the payload. */
+    void applySynced(List<Deck> decks) {
+        rememberAsLastGood(decks);
+    }
+
+    private void rememberAsLastGood(List<Deck> decks) {
+        lastGoodDecks = decks;
+        if (fileStore != null) {
+            fileStore.writeAll(decks);
+        }
     }
 
     // Package-private (not private) so unit tests can stub this one method

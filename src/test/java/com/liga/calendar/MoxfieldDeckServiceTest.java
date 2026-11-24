@@ -2,10 +2,6 @@ package com.liga.calendar;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,34 +45,14 @@ class MoxfieldDeckServiceTest {
     }
 
     @Test
-    void getDecksCachesResultsWithinTheTtl() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
+    void getDecksFetchesFreshOnEveryCallInsteadOfCaching() {
         TestableService service = new TestableService();
-        service.clock = clock;
-        List<Deck> result = List.of(new Deck("1", "Esper Affinity", "pauper", "https://moxfield.com/decks/1", List.of("W")));
-        service.nextResult = result;
-
-        List<Deck> first = service.getDecks();
-        clock.advance(Duration.ofMinutes(5));
-        List<Deck> second = service.getDecks();
-
-        assertThat(first).isEqualTo(result);
-        assertThat(second).isEqualTo(result);
-        assertThat(service.fetchCount).isEqualTo(1);
-    }
-
-    @Test
-    void getDecksRefetchesAfterTheTtlExpires() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
-        TestableService service = new TestableService();
-        service.clock = clock;
         List<Deck> first = List.of(new Deck("1", "Esper Affinity", "pauper", "https://moxfield.com/decks/1", List.of("W")));
         List<Deck> second = List.of(new Deck("2", "Dimir Control", "pauper", "https://moxfield.com/decks/2", List.of("U", "B")));
 
         service.nextResult = first;
         assertThat(service.getDecks()).isEqualTo(first);
 
-        clock.advance(Duration.ofMinutes(16));
         service.nextResult = second;
         assertThat(service.getDecks()).isEqualTo(second);
         assertThat(service.fetchCount).isEqualTo(2);
@@ -84,15 +60,12 @@ class MoxfieldDeckServiceTest {
 
     @Test
     void getDecksFallsBackToTheLastGoodResultWhenARefreshFails() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-01-01T00:00:00Z"));
         TestableService service = new TestableService();
-        service.clock = clock;
         List<Deck> good = List.of(new Deck("1", "Esper Affinity", "pauper", "https://moxfield.com/decks/1", List.of("W")));
 
         service.nextResult = good;
         assertThat(service.getDecks()).isEqualTo(good);
 
-        clock.advance(Duration.ofMinutes(16));
         service.nextResult = null;
         assertThat(service.getDecks()).isEqualTo(good);
     }
@@ -116,30 +89,4 @@ class MoxfieldDeckServiceTest {
         }
     }
 
-    private static final class MutableClock extends Clock {
-        private Instant now;
-
-        MutableClock(Instant now) {
-            this.now = now;
-        }
-
-        void advance(Duration duration) {
-            now = now.plus(duration);
-        }
-
-        @Override
-        public ZoneId getZone() {
-            return ZoneId.systemDefault();
-        }
-
-        @Override
-        public Clock withZone(ZoneId zone) {
-            return this;
-        }
-
-        @Override
-        public Instant instant() {
-            return now;
-        }
-    }
 }
