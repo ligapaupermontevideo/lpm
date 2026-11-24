@@ -1,0 +1,46 @@
+name: Sync Moxfield decks
+
+# MoxfieldDeckService tries to fetch the league's decks straight from
+# Moxfield on every request, but Cloudflare blocks that from Render's IP
+# range regardless of client (confirmed: curl itself gets rejected there).
+# This runs from GitHub's own runners instead, which aren't blocked, and
+# pushes the result to a token-protected endpoint
+# (MoxfieldSyncController) so a deck that gets set private on Moxfield
+# disappears from the site within one run of this workflow, not whenever
+# someone remembers to redeploy.
+#
+# Needs two repo secrets (Settings -> Secrets and variables -> Actions):
+#   MOXFIELD_SYNC_URL   e.g. https://liga-pauper-montevideo.onrender.com/internal/moxfield-decks-sync
+#   MOXFIELD_SYNC_TOKEN must match liga.moxfield.sync.token (MOXFIELD_SYNC_TOKEN env var) on the host
+#
+# GitHub disables scheduled workflows automatically after 60 days with no
+# repository activity -- if this stops running during the off-season, a
+# push (or opening this file and clicking "Enable workflow" on the Actions
+# tab) turns it back on.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch decks from Moxfield and push them to the site
+        env:
+          SYNC_URL: ${{ secrets.MOXFIELD_SYNC_URL }}
+          SYNC_TOKEN: ${{ secrets.MOXFIELD_SYNC_TOKEN }}
+          MOXFIELD_USERNAME: ligapaupermontevideo
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
+            -H "Accept: application/json" \
+            "https://api2.moxfield.com/v2/decks/search?pageNumber=1&pageSize=100&sortType=updated&sortDirection=Descending&board=mainboard&authorUserNames=${MOXFIELD_USERNAME}" \
+            -o moxfield-decks.json
+
+          curl --fail --silent --show-error \
+            -X POST "${SYNC_URL}?token=${SYNC_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data-binary @moxfield-decks.json
